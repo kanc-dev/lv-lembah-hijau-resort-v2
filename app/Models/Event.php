@@ -16,4 +16,9 @@ class Event extends Model
     {
         return $this->hasMany(Booking::class);
     }
+
+    public function guests()
+    {
+        return $this->belongsToMany(Guest::class, 'event_guest');
+    }
 }

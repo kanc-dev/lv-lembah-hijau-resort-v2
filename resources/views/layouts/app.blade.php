@@ -49,6 +49,9 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"
         integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
 
+    <!-- apexcharts -->
+    <script src="{{ asset('') }}assets/libs/apexcharts/apexcharts.min.js"></script>
+
     {{-- @vite(['resources/sass/app.scss', 'resources/js/app.js']) --}}
 
 </head>
@@ -842,8 +845,7 @@
 
     <script src="{{ asset('') }}assets/js/pages/datatables.init.js"></script>
 
-    <!-- apexcharts -->
-    <script src="{{ asset('') }}assets/libs/apexcharts/apexcharts.min.js"></script>
+
 
     <!-- Vector map-->
     <script src="{{ asset('') }}assets/libs/jsvectormap/js/jsvectormap.min.js"></script>
@@ -854,6 +856,11 @@
 
     <!-- Dashboard init -->
     <script src="{{ asset('') }}assets/js/pages/dashboard-ecommerce.init.js"></script>
+    <script src="{{ asset('') }}assets/js/pages/dashboard-analytics.init.js"></script>
+    <script src="{{ asset('') }}assets/js/pages/dashboard-projects.init.js"></script>
+    <script src="{{ asset('') }}assets/js/pages/dashboard-crm.init.js"></script>
+
+
 
     <!-- prismjs plugin -->
     <script src="{{ asset('') }}assets/libs/prismjs/prism.js"></script>

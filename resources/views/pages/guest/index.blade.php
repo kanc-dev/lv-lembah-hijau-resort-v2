@@ -15,7 +15,7 @@
                 </div>
             </div>
         </div>
-
+        {{-- {!! $data['guests'] !!} --}}
         <div class="row">
             <div class="col-lg-12">
                 <div class="card">
@@ -68,6 +68,7 @@
                                                     value="option1">
                                             </div>
                                         </th>
+                                        {{-- <td>{!! $guest->branch->rooms !!}</td> --}}
                                         <td>{{ $guest->id }}</td>
                                         <td>{{ $guest->nama }}</td>
                                         <td>{{ $guest->jenis_kelamin }}</td>
@@ -78,7 +79,7 @@
                                         <td>{{ $guest->no_hp }}</td>
                                         <td>{{ $guest->email }}</td>
                                         <td>
-                                            {{ $guest->room ? $guest->room->nama : 'N/A' }}
+                                            {{ $guest->guestcheckins->first() ? $guest->guestcheckins->first()->room->nama : 'N/A' }}
                                         </td>
                                         <td>
                                             <a href="{{ route('guest.edit', $guest) }}"
@@ -94,8 +95,8 @@
                                         <td>{{ $guest->tanggal_rencana_checkin }}</td>
                                         <td>{{ $guest->tanggal_rencana_checkout }}</td>
                                         <td id="checkin_date_display{{ $guest->id }}">
-                                            @if ($guest->tanggal_checkin)
-                                                {{ $guest->tanggal_checkin }}
+                                            @if ($guest->guestcheckins->isNotEmpty() && $guest->guestcheckins->first()->tanggal_checkin)
+                                                {{ $guest->guestcheckins->first()->tanggal_checkin }}
                                             @else
                                                 <button class="btn btn-info btn-sm" data-bs-toggle="modal"
                                                     data-bs-target="#checkinModal{{ $guest->id }}">
@@ -104,8 +105,8 @@
                                             @endif
                                         </td>
                                         <td id="checkout_date_display{{ $guest->id }}">
-                                            @if ($guest->tanggal_checkout)
-                                                {{ $guest->tanggal_checkout }}
+                                            @if ($guest->guestcheckins->isNotEmpty() && $guest->guestcheckins->first()->tanggal_checkout)
+                                                {{ $guest->guestcheckins->first()->tanggal_checkout }}
                                             @else
                                                 <button class="btn btn-info btn-sm" data-bs-toggle="modal"
                                                     data-bs-target="#checkoutModal{{ $guest->id }}">
@@ -134,6 +135,18 @@
                                                         <input type="date" class="form-control"
                                                             id="checkin_date{{ $guest->id }}" name="checkin_date">
                                                     </div>
+                                                    <div class="mb-3">
+                                                        <label for="room_select{{ $guest->id }}"
+                                                            class="form-label">Select Room</label>
+                                                        <select class="form-control" id="room_select{{ $guest->id }}"
+                                                            name="room_id">
+                                                            <option value="">Select Room</option>
+                                                            @foreach ($guest->branch->rooms as $room)
+                                                                <option value="{{ $room->id }}">{{ $room->nama }}
+                                                                </option>
+                                                            @endforeach
+                                                        </select>
+                                                    </div>
                                                 </div>
                                                 <div class="modal-footer">
                                                     <button type="button" class="btn btn-secondary"
@@ -144,6 +157,7 @@
                                             </div>
                                         </div>
                                     </div>
+
 
                                     <!-- Modal for Check-out -->
                                     <div class="modal fade" id="checkoutModal{{ $guest->id }}" tabindex="-1"
@@ -174,79 +188,17 @@
                                             </div>
                                         </div>
                                     </div>
+
+                                    <script>
+                                        // $('#checkinModal{{ $guest->id }}').on('show.bs.modal', function() {
+                                        //     loadRoomsForBranch({{ $guest->id }});
+                                        // });
+                                    </script>
                                 @endforeach
                             </tbody>
                         </table>
 
-                        <script>
-                            function setCheckinDate(guestId) {
-                                let checkinDate = document.getElementById('checkin_date' + guestId).value;
 
-                                if (checkinDate) {
-                                    // Make AJAX request to update the check-in date
-                                    fetch('/guest/checkin/' + guestId, {
-                                            method: 'POST',
-                                            headers: {
-                                                'Content-Type': 'application/json',
-                                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                                            },
-                                            body: JSON.stringify({
-                                                checkin_date: checkinDate
-                                            })
-                                        })
-                                        .then(response => response.json())
-                                        .then(data => {
-                                            if (data.success) {
-                                                alert(data.message);
-                                                // Update the UI to show the new check-in date
-                                                document.getElementById('checkin_date_display' + guestId).textContent = data.checkin_date;
-                                                // Close the modal
-                                                let modal = document.getElementById('checkinModal' + guestId);
-                                                let modalInstance = bootstrap.Modal.getInstance(modal);
-                                                modalInstance.hide();
-                                                location.reload();
-                                            } else {
-                                                alert('Error updating check-in date.');
-                                            }
-                                        })
-                                        .catch(error => console.error('Error:', error));
-                                }
-                            }
-
-                            function setCheckoutDate(guestId) {
-                                let checkoutDate = document.getElementById('checkout_date' + guestId).value;
-
-                                if (checkoutDate) {
-                                    // Make AJAX request to update the check-out date
-                                    fetch('/guest/checkout/' + guestId, {
-                                            method: 'POST',
-                                            headers: {
-                                                'Content-Type': 'application/json',
-                                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                                            },
-                                            body: JSON.stringify({
-                                                checkout_date: checkoutDate
-                                            })
-                                        })
-                                        .then(response => response.json())
-                                        .then(data => {
-                                            if (data.success) {
-                                                alert(data.message);
-                                                // Update the UI to show the new check-out date
-                                                document.getElementById('checkout_date_display' + guestId).textContent = data.checkout_date;
-                                                // Close the modal
-                                                let modal = document.getElementById('checkoutModal' + guestId);
-                                                let modalInstance = bootstrap.Modal.getInstance(modal);
-                                                modalInstance.hide();
-                                                location.reload();
-                                            } else {
-                                                alert('Error updating check-out date.');
-                                            }
-                                        })
-                                        .catch(error => console.error('Error:', error));
-                                }
-                            }
-                        </script>
 
 
                     </div>
@@ -255,3 +207,104 @@
         </div>
     </div>
 @endsection
+
+<script>
+    function loadRoomsForBranch(guestId) {
+        fetch('/guest/rooms/' + guestId)
+            .then(response => response.json())
+            .then(data => {
+                let roomSelect = document.getElementById('room_select' + guestId);
+                roomSelect.innerHTML = ''; // Clear existing options
+
+                // Add a default "Select Room" option
+                let defaultOption = document.createElement('option');
+                defaultOption.value = '';
+                defaultOption.textContent = 'Select Room';
+                roomSelect.appendChild(defaultOption);
+
+                // Populate room options
+                data.forEach(room => {
+                    let option = document.createElement('option');
+                    option.value = room.id;
+                    option.textContent = room.nama;
+                    roomSelect.appendChild(option);
+                });
+            })
+            .catch(error => console.error('Error loading rooms:', error));
+    }
+
+    // Call loadRoomsForBranch when the modal is shown
+
+
+    // Set the check-in date and room for the guest
+    function setCheckinDate(guestId) {
+        let checkinDate = document.getElementById('checkin_date' + guestId).value;
+        let roomId = document.getElementById('room_select' + guestId).value;
+
+        if (checkinDate && roomId) {
+            // Make AJAX request to update the check-in date and room assignment
+            fetch('/guest/checkin/' + guestId, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
+                    body: JSON.stringify({
+                        checkin_date: checkinDate,
+                        room_id: roomId
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(data.message);
+                        // Update the UI to show the new check-in date and room
+                        document.getElementById('checkin_date_display' + guestId).textContent = data.checkin_date;
+                        // Close the modal
+                        let modal = document.getElementById('checkinModal' + guestId);
+                        let modalInstance = bootstrap.Modal.getInstance(modal);
+                        modalInstance.hide();
+                        location.reload();
+                        window.location.reload();
+                    } else {
+                        alert('Error updating check-in information.');
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+        }
+    }
+
+    function setCheckoutDate(guestId) {
+        let checkoutDate = document.getElementById('checkout_date' + guestId).value;
+
+        if (checkoutDate) {
+            // Make AJAX request to update the check-out date
+            fetch('/guest/checkout/' + guestId, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
+                    body: JSON.stringify({
+                        checkout_date: checkoutDate
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(data.message);
+                        // Update the UI to show the new check-out date
+                        document.getElementById('checkout_date_display' + guestId).textContent = data.checkout_date;
+                        // Close the modal
+                        let modal = document.getElementById('checkoutModal' + guestId);
+                        let modalInstance = bootstrap.Modal.getInstance(modal);
+                        modalInstance.hide();
+                        window.location.reload();
+                    } else {
+                        alert('Error updating check-out date.');
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+        }
+    }
+</script>

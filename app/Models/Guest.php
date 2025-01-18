@@ -17,8 +17,19 @@ class Guest extends Model
         return $this->belongsTo(Branch::class);
     }
 
+
     public function room()
     {
         return $this->belongsTo(Room::class, 'room_id');
+    }
+
+    public function events()
+    {
+        return $this->belongsToMany(Event::class, 'event_guest');
+    }
+
+    public function guestcheckins()
+    {
+        return $this->hasMany(GuestCheckin::class);
     }
 }

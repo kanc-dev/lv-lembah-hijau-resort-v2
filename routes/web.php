@@ -4,6 +4,7 @@ use App\Http\Controllers\BookingController;
 use App\Http\Controllers\BranchController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\GuestController;
+use App\Http\Controllers\HomeController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\RoomController;
 use App\Http\Controllers\UserController;
@@ -18,15 +19,21 @@ Auth::routes();
 
 
 Route::middleware('auth')->group(function () {
-    Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home.index');
+    Route::get('/home', [HomeController::class, 'index'])->name('home.index');
+    Route::get('/branch-guests', [HomeController::class, 'getBranchGuestData'])->name('branch-guests');
+    Route::get('/branch-room-occupancy', [HomeController::class, 'getRoomOccupancy'])->name('branch-room-occupancy');
+
 
     // Route::get('/booking', [BookingController::class, 'index'])->name('booking.index');
     Route::resource('booking', BookingController::class);
 
     Route::get('/guest', [GuestController::class, 'index'])->name('guest.index');
     Route::resource('guest', GuestController::class);
-    Route::post('/guest/checkin/{guest}', [GuestController::class, 'setCheckinDate'])->name('guest.setCheckinDate');
-    Route::post('/guest/checkout/{guest}', [GuestController::class, 'setCheckoutDate'])->name('guest.setCheckoutDate');
+    Route::post('/guest/checkin/{guest}', [GuestController::class, 'checkIn'])->name('guest.checkIn');
+    Route::post('/guest/checkout/{guest}', [GuestController::class, 'checkOut'])->name('guest.checkOut');
+
+    Route::get('/guest/rooms/{guestId}', [GuestController::class, 'getAvailableRooms']);
+
 
     Route::resource('event', EventController::class);
     Route::post('/event/store_ajax', [EventController::class, 'store_ajax'])->name('event.store_ajax');
@@ -52,6 +59,6 @@ Route::middleware('auth')->group(function () {
 
 
     Route::get('/user', [UserController::class, 'index'])->name('user.index');
-    Route::get('/branche', [BranchController::class, 'index'])->name('branch.index');
+    Route::get('/branch', [BranchController::class, 'index'])->name('branch.index');
     Route::get('/role', [RoleController::class, 'index'])->name('role.index');
 });

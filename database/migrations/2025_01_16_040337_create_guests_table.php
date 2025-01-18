@@ -21,12 +21,8 @@ return new class extends Migration
             $table->string('no_polisi');
             $table->string('no_hp');
             $table->string('email');
-            $table->date('tanggal_rencana_checkin');
-            $table->date('tanggal_rencana_checkout');
-            $table->date('tanggal_checkin')->nullable();
-            $table->date('tanggal_checkout')->nullable();
-            $table->unsignedBigInteger('room_id')->nullable();
-            $table->foreignId('event_id')->constrained('events');
+            $table->date('tanggal_rencana_checkin')->nullable();
+            $table->date('tanggal_rencana_checkout')->nullable();
             $table->timestamps();
         });
     }

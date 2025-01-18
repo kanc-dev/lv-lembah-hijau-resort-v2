@@ -7,6 +7,7 @@ use App\Http\Requests\StoreGuestRequest;
 use App\Http\Requests\UpdateGuestRequest;
 use App\Models\Branch;
 use App\Models\Event;
+use App\Models\GuestCheckin;
 use App\Models\Room;
 use Illuminate\Http\Request;
 
@@ -17,9 +18,10 @@ class GuestController extends Controller
      */
     public function index()
     {
-        $guests = Guest::all();
+        $guests = Guest::with('branch.rooms', 'events', 'guestcheckins.room')->get();
         $data['guests'] = $guests;
         $data['page_title'] = 'Data Tamu';
+        // dd($data['guests']);
         return view('pages.guest.index', compact('data'));
     }
 
@@ -43,7 +45,7 @@ class GuestController extends Controller
         $request->validate([
             'nama' => 'required|string|max:255',
             'jenis_kelamin' => 'required|string|max:1',
-            'branch_id' => 'required|exists:branches,id', // Validate branch_id
+            'branch_id' => 'required|exists:branches,id',
             'batch' => 'required|string|max:255',
             'kendaraan' => 'required|string|max:255',
             'no_polisi' => 'required|string|max:255',
@@ -51,11 +53,11 @@ class GuestController extends Controller
             'email' => 'required|email|max:255',
             'tanggal_rencana_checkin' => 'required|date',
             'tanggal_rencana_checkout' => 'required|date',
-            'event_id' => 'required|exists:events,id', // Validate event_id
+            'event_id' => 'required|exists:events,id',
         ]);
 
         // Create a new guest record
-        Guest::create([
+        $guest = Guest::create([
             'nama' => $request->nama,
             'jenis_kelamin' => $request->jenis_kelamin,
             'branch_id' => $request->branch_id,
@@ -66,9 +68,10 @@ class GuestController extends Controller
             'email' => $request->email,
             'tanggal_rencana_checkin' => $request->tanggal_rencana_checkin,
             'tanggal_rencana_checkout' => $request->tanggal_rencana_checkout,
-            'room_id' => $request->room_id,
-            'event_id' => $request->event_id,
         ]);
+
+        // Associate the guest with the event through the event_guest pivot table
+        $guest->events()->attach($request->event_id);
 
         return redirect()->route('guest.index')->with('success', 'Guest created successfully');
     }
@@ -175,6 +178,64 @@ class GuestController extends Controller
             'success' => true,
             'message' => 'Check-out date updated successfully.',
             'checkout_date' => $guest->tanggal_checkout,
+        ]);
+    }
+
+    public function getAvailableRooms($guestId)
+    {
+        $guest = Guest::findOrFail($guestId);
+        $rooms = Room::where('branch_id', $guest->branch_id)->get();
+
+        return response()->json($rooms);
+    }
+
+    public function checkIn(Request $request, $guestId)
+    {
+        $request->validate([
+            'checkin_date' => 'required|date',
+            'room_id' => 'required|exists:rooms,id',
+        ]);
+
+        $guest = Guest::findOrFail($guestId);
+        $checkin = new GuestCheckin();
+        $checkin->guest_id = $guest->id;
+        $checkin->room_id = $request->room_id;
+        $checkin->tanggal_checkin = $request->checkin_date;
+        $checkin->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Check-in successful!',
+            'checkin_date' => $checkin->tanggal_checkin,
+        ]);
+    }
+
+    public function checkOut(Request $request, $guestId)
+    {
+        $request->validate([
+            'checkout_date' => 'required|date',
+        ]);
+
+        // Cari check-in tamu
+        $guestCheckin = GuestCheckin::where('guest_id', $guestId)
+            ->whereNull('tanggal_checkout')  // Pastikan ini adalah check-in aktif
+            ->first();
+
+        if ($guestCheckin) {
+            // Update tanggal_checkout
+            $guestCheckin->tanggal_checkout = $request->checkout_date;
+            $guestCheckin->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Check-out date set successfully.',
+                'checkout_date' => $guestCheckin->tanggal_checkout
+            ]);
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => 'No active check-in found for this guest.'
         ]);
     }
 }

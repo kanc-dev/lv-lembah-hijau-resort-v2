@@ -14,11 +14,16 @@ class Room extends Model
 
     public function branch()
     {
-        return $this->belongsTo(Branch::class, 'branch_id');
+        return $this->belongsTo(Branch::class);
     }
 
     public function guests()
     {
         return $this->hasMany(Guest::class, 'room_id');
+    }
+
+    public function guestCheckins()
+    {
+        return $this->hasMany(GuestCheckin::class, 'room_id');
     }
 }

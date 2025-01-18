@@ -219,7 +219,7 @@
                                         </div>
                                     </div>
 
-                                    <div class="mb-3">
+                                    {{-- <div class="mb-3">
                                         <label for="room_id" class="form-label">Kamar</label>
                                         <select class="form-select @error('room_id') is-invalid @enderror" id="room_id"
                                             name="room_id" required>
@@ -238,7 +238,7 @@
                                                 Harap pilih kamar.
                                             @enderror
                                         </div>
-                                    </div>
+                                    </div> --}}
 
 
                                 </div>

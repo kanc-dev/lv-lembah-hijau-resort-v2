@@ -19,7 +19,7 @@ class Branch extends Model
 
     public function rooms()
     {
-        return $this->hasMany(Room::class, 'branch_id');
+        return $this->hasMany(Room::class);
     }
 
     public function guests()
