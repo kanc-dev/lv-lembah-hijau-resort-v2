@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('nama_kelas');
             $table->string('deskripsi');
+            $table->unsignedBigInteger('branch_id')->nullable();
             $table->timestamps();
         });
     }

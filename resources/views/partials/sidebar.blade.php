@@ -86,7 +86,6 @@
 
                 @if (Auth::user()->branch_id == 0)
                     <li class="menu-title"><span data-key="t-menu">Administator</span></li>
-                    <!-- Cek jika user adalah admin -->
                     <li class="nav-item">
                         <a class="nav-link menu-link {{ request()->is('user*') ? 'active' : '' }}"
                             href="{{ route('user.index') }}">

@@ -64,6 +64,30 @@
                                 </div>
                             </div>
 
+                            <div class="mb-3">
+                                <label for="branch_id" class="form-label">Unit / Branch <span
+                                        class="text-danger">*</span></label>
+                                <select class="form-select @error('branch_id') is-invalid @enderror" id="branch_id"
+                                    name="branch_id" required>
+                                    @if (count($data['branches']) > 1)
+                                        <option value="">Pilih Unit / Branch </option>
+                                    @endif
+                                    @foreach ($data['branches'] as $branch)
+                                        <option value="{{ $branch->id }}"
+                                            {{ old('branch_id') == $branch->id ? 'selected' : '' }}>
+                                            {{ $branch->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <div class="invalid-feedback">
+                                    @error('branch_id')
+                                        {{ $message }}
+                                    @else
+                                        Harap pilih unit asal.
+                                    @enderror
+                                </div>
+                            </div>
+
 
                             <div class="text-start">
                                 <button type="submit" class="btn btn-success">Tambah Event</button>

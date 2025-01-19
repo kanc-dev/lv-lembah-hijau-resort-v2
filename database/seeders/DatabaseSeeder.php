@@ -20,7 +20,7 @@ class DatabaseSeeder extends Seeder
             RoomSeeder::class,
             EventSeeder::class,
             BookingSeeder::class,
-            // GuestSeeder::class,
+            GuestSeeder::class,
             RoomStatusSeeder::class,
         ]);
     }

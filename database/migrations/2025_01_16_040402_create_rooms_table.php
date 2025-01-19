@@ -19,6 +19,7 @@ return new class extends Migration
             $table->string('harga');
             $table->enum('status', ['available', 'unavailable']);
             $table->integer('kapasitas');
+            $table->integer('terisi')->nullable();
             $table->timestamps();
 
             $table->foreign('branch_id')->references('id')->on('branches')->onDelete('cascade');

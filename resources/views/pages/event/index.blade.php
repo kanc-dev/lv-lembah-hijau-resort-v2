@@ -49,6 +49,7 @@
                                     <th>ID</th>
                                     <th>Nama Event</th>
                                     <th>Deskripsi</th>
+                                    <th>Unit / Branch</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -63,6 +64,7 @@
                                         <td>{{ $event['id'] }}</td>
                                         <td>{{ $event['nama_kelas'] }}</td>
                                         <td>{{ $event['deskripsi'] }}</td>
+                                        <td>{{ isset($event['branch_id']) ? $event->branch['name'] : 'N/A' }}</td>
                                         <td>
                                             <div class="dropdown d-inline-block">
                                                 <button class="btn btn-soft-secondary btn-sm dropdown" type="button"

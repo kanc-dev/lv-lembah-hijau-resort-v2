@@ -32,16 +32,10 @@
                             </div>
                         @endif
 
-                        <table id="example" class="table align-middle table-bordered dt-responsive nowrap table-striped"
+                        <table id="example" class="table align-middle dt-responsive nowrap table-striped"
                             style="width:100%">
                             <thead>
                                 <tr>
-                                    <th scope="col" style="width: 10px;">
-                                        <div class="form-check">
-                                            <input class="form-check-input fs-15" type="checkbox" id="checkAll"
-                                                value="option">
-                                        </div>
-                                    </th>
                                     <th>ID</th>
                                     <th>Name</th>
                                     <th>Gender</th>
@@ -51,25 +45,18 @@
                                     <th>Plate No</th>
                                     <th>Phone</th>
                                     <th>Email</th>
-                                    <th>Room</th>
+                                    <th>Kamar</th>
+                                    <th>Rencana Check-in</th>
+                                    <th>Rencana Check-out</th>
+                                    <th>Actual Check-in</th>
+                                    <th>Actual Check-out</th>
                                     <th>Actions</th>
-                                    <th>Planned Check-in Date</th>
-                                    <th>Planned Check-out Date</th>
-                                    <th>Actual Check-in Date</th>
-                                    <th>Actual Check-out Date</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach ($data['guests'] as $guest)
                                     <tr>
-                                        <th scope="row">
-                                            <div class="form-check">
-                                                <input class="form-check-input fs-15" type="checkbox" name="checkAll"
-                                                    value="option1">
-                                            </div>
-                                        </th>
-                                        {{-- <td>{!! $guest->branch->rooms !!}</td> --}}
-                                        <td>{{ $guest->id }}</td>
+                                        <td>{{ $loop->iteration }}</td>
                                         <td>{{ $guest->nama }}</td>
                                         <td>{{ $guest->jenis_kelamin }}</td>
                                         <td>{{ $guest->branch->name }}</td>
@@ -79,7 +66,101 @@
                                         <td>{{ $guest->no_hp }}</td>
                                         <td>{{ $guest->email }}</td>
                                         <td>
-                                            {{ $guest->guestcheckins->first() ? $guest->guestcheckins->first()->room->nama : 'N/A' }}
+                                            @if ($guest->guestcheckins->isNotEmpty())
+                                                {{ $guest->guestcheckins->first() ? $guest->guestcheckins->first()->room->nama : 'N/A' }}
+                                            @else
+                                                <button class="btn btn-warning btn-sm" data-bs-toggle="modal"
+                                                    data-bs-target="#plotRoomModal{{ $guest->id }}">
+                                                    Plot Kamar
+                                                </button>
+
+                                                <div class="modal fade" id="plotRoomModal{{ $guest->id }}"
+                                                    tabindex="-1" aria-labelledby="plotRoomModalLabel" aria-hidden="true">
+                                                    <div class="modal-dialog modal-lg">
+                                                        <div class="modal-content">
+                                                            <div class="modal-header">
+                                                                <h5 class="modal-title" id="plotRoomModalLabel">Pilih Kamar
+                                                                    untuk Tamu: {{ $guest->nama }}</h5>
+                                                                <button type="button" class="btn-close"
+                                                                    data-bs-dismiss="modal" aria-label="Close"></button>
+                                                            </div>
+                                                            <div class="modal-body">
+                                                                <div class="table-responsive">
+                                                                    <table id="roomsTable"
+                                                                        class="table text-center align-middle table-sm table-striped table-hover table-bordered">
+                                                                        <thead class="table-light">
+                                                                            <tr>
+                                                                                <th>No</th>
+                                                                                <th>Nama Kamar</th>
+                                                                                <th>Kapasitas</th>
+                                                                                <th>Terisi</th>
+                                                                                <th>Tersedia</th>
+                                                                                <th>Aksi</th>
+                                                                            </tr>
+                                                                        </thead>
+                                                                        <tbody>
+                                                                            @foreach ($data['rooms'] as $index => $room)
+                                                                                <tr>
+                                                                                    <td>{{ $index + 1 }}</td>
+                                                                                    <td>{{ $room->nama }}</td>
+                                                                                    <td>{{ $room->kapasitas }}</td>
+                                                                                    <td>{{ $room->terisi ?? 0 }}</td>
+                                                                                    <td>{{ $room->kapasitas - $room->terisi }}
+                                                                                    </td>
+                                                                                    <td>
+                                                                                        <button
+                                                                                            class="btn btn-sm btn-success select-room-btn"
+                                                                                            data-room-id="{{ $room->id }}"
+                                                                                            data-guest-id="{{ $guest->id }}"
+                                                                                            @if ($room->terisi >= $room->kapasitas) disabled @endif>
+                                                                                            {{ $room->terisi >= $room->kapasitas ? 'Penuh' : 'Pilih' }}
+                                                                                        </button>
+                                                                                    </td>
+                                                                                </tr>
+                                                                            @endforeach
+                                                                        </tbody>
+                                                                    </table>
+                                                                </div>
+
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            @endif
+                                        </td>
+
+                                        <td>{{ date('d, M Y', strtotime($guest->tanggal_rencana_checkin)) }}</td>
+                                        <td>{{ date('d, M Y', strtotime($guest->tanggal_rencana_checkout)) }}</td>
+                                        <td id="checkin_date_display{{ $guest->id }}">
+                                            @if ($guest->guestcheckins->isNotEmpty() && $guest->guestcheckins->first()->room_id)
+                                                @if ($guest->guestcheckins->isNotEmpty() && $guest->guestcheckins->first()->tanggal_checkin)
+                                                    {{ date('d, M Y', strtotime($guest->guestcheckins->first()->tanggal_checkin)) }}
+                                                @else
+                                                    <form action="{{ route('guest.checkin', $guest->id) }}" method="POST"
+                                                        class="d-inline">
+                                                        @csrf
+                                                        <input type="hidden" name="checkin_date"
+                                                            value="{{ date('Y-m-d') }}">
+                                                        <button type="submit" class="btn btn-info btn-sm">Check In</button>
+                                                    </form>
+                                                @endif
+                                            @endif
+                                        </td>
+                                        <td id="checkout_date_display{{ $guest->id }}">
+                                            @if ($guest->guestcheckins->isNotEmpty() && $guest->guestcheckins->first()->tanggal_checkin)
+                                                @if ($guest->guestcheckins->isNotEmpty() && $guest->guestcheckins->first()->tanggal_checkout)
+                                                    {{ date('d, M Y', strtotime($guest->guestcheckins->first()->tanggal_checkout)) }}
+                                                @else
+                                                    <form action="{{ route('guest.checkout', $guest->id) }}" method="POST"
+                                                        class="d-inline">
+                                                        @csrf
+                                                        <input type="hidden" name="checkout_date"
+                                                            value="{{ date('Y-m-d') }}">
+                                                        <button type="submit" class="btn btn-info btn-sm">Check
+                                                            Out</button>
+                                                    </form>
+                                                @endif
+                                            @endif
                                         </td>
                                         <td>
                                             <a href="{{ route('guest.edit', $guest) }}"
@@ -92,115 +173,13 @@
                                                 <button type="submit" class="btn btn-danger btn-sm">Delete</button>
                                             </form>
                                         </td>
-                                        <td>{{ $guest->tanggal_rencana_checkin }}</td>
-                                        <td>{{ $guest->tanggal_rencana_checkout }}</td>
-                                        <td id="checkin_date_display{{ $guest->id }}">
-                                            @if ($guest->guestcheckins->isNotEmpty() && $guest->guestcheckins->first()->tanggal_checkin)
-                                                {{ $guest->guestcheckins->first()->tanggal_checkin }}
-                                            @else
-                                                <button class="btn btn-info btn-sm" data-bs-toggle="modal"
-                                                    data-bs-target="#checkinModal{{ $guest->id }}">
-                                                    Set Check-in
-                                                </button>
-                                            @endif
-                                        </td>
-                                        <td id="checkout_date_display{{ $guest->id }}">
-                                            @if ($guest->guestcheckins->isNotEmpty() && $guest->guestcheckins->first()->tanggal_checkout)
-                                                {{ $guest->guestcheckins->first()->tanggal_checkout }}
-                                            @else
-                                                <button class="btn btn-info btn-sm" data-bs-toggle="modal"
-                                                    data-bs-target="#checkoutModal{{ $guest->id }}">
-                                                    Set Check-out
-                                                </button>
-                                            @endif
-                                        </td>
 
                                     </tr>
 
-                                    <!-- Modal for Check-in -->
-                                    <div class="modal fade" id="checkinModal{{ $guest->id }}" tabindex="-1"
-                                        aria-labelledby="checkinModalLabel" aria-hidden="true">
-                                        <div class="modal-dialog">
-                                            <div class="modal-content">
-                                                <div class="modal-header">
-                                                    <h5 class="modal-title" id="checkinModalLabel">Set Check-in for
-                                                        {{ $guest->nama }}</h5>
-                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                                        aria-label="Close"></button>
-                                                </div>
-                                                <div class="modal-body">
-                                                    <div class="mb-3">
-                                                        <label for="checkin_date" class="form-label">Select Check-in
-                                                            Date</label>
-                                                        <input type="date" class="form-control"
-                                                            id="checkin_date{{ $guest->id }}" name="checkin_date">
-                                                    </div>
-                                                    <div class="mb-3">
-                                                        <label for="room_select{{ $guest->id }}"
-                                                            class="form-label">Select Room</label>
-                                                        <select class="form-control" id="room_select{{ $guest->id }}"
-                                                            name="room_id">
-                                                            <option value="">Select Room</option>
-                                                            @foreach ($guest->branch->rooms as $room)
-                                                                <option value="{{ $room->id }}">{{ $room->nama }}
-                                                                </option>
-                                                            @endforeach
-                                                        </select>
-                                                    </div>
-                                                </div>
-                                                <div class="modal-footer">
-                                                    <button type="button" class="btn btn-secondary"
-                                                        data-bs-dismiss="modal">Close</button>
-                                                    <button type="button" class="btn btn-primary"
-                                                        onclick="setCheckinDate({{ $guest->id }})">Set Check-in</button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-
-                                    <!-- Modal for Check-out -->
-                                    <div class="modal fade" id="checkoutModal{{ $guest->id }}" tabindex="-1"
-                                        aria-labelledby="checkoutModalLabel" aria-hidden="true">
-                                        <div class="modal-dialog">
-                                            <div class="modal-content">
-                                                <div class="modal-header">
-                                                    <h5 class="modal-title" id="checkoutModalLabel">Set Check-out for
-                                                        {{ $guest->nama }}</h5>
-                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                                        aria-label="Close"></button>
-                                                </div>
-                                                <div class="modal-body">
-                                                    <div class="mb-3">
-                                                        <label for="checkout_date" class="form-label">Select Check-out
-                                                            Date</label>
-                                                        <input type="date" class="form-control"
-                                                            id="checkout_date{{ $guest->id }}" name="checkout_date">
-                                                    </div>
-                                                </div>
-                                                <div class="modal-footer">
-                                                    <button type="button" class="btn btn-secondary"
-                                                        data-bs-dismiss="modal">Close</button>
-                                                    <button type="button" class="btn btn-primary"
-                                                        onclick="setCheckoutDate({{ $guest->id }})">Set
-                                                        Check-out</button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <script>
-                                        // $('#checkinModal{{ $guest->id }}').on('show.bs.modal', function() {
-                                        //     loadRoomsForBranch({{ $guest->id }});
-                                        // });
-                                    </script>
+                                    <!-- Default Modals -->
                                 @endforeach
                             </tbody>
                         </table>
-
-
-
-
                     </div>
                 </div>
             </div>
@@ -209,102 +188,148 @@
 @endsection
 
 <script>
-    function loadRoomsForBranch(guestId) {
-        fetch('/guest/rooms/' + guestId)
-            .then(response => response.json())
-            .then(data => {
-                let roomSelect = document.getElementById('room_select' + guestId);
-                roomSelect.innerHTML = ''; // Clear existing options
+    document.addEventListener('DOMContentLoaded', function() {
+        const checkinButtons = document.querySelectorAll('.set-checkin-btn');
+        console.log(checkinButtons); // Pastikan tombol ada di DOM
 
-                // Add a default "Select Room" option
-                let defaultOption = document.createElement('option');
-                defaultOption.value = '';
-                defaultOption.textContent = 'Select Room';
-                roomSelect.appendChild(defaultOption);
+        checkinButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                console.log('Tombol Check-in diklik!');
+                const guestId = this.getAttribute('data-guest-id');
+                const today = new Date().toISOString().split('T')[0];
+                console.log(today);
+            });
+        });
 
-                // Populate room options
-                data.forEach(room => {
-                    let option = document.createElement('option');
-                    option.value = room.id;
-                    option.textContent = room.nama;
-                    roomSelect.appendChild(option);
-                });
-            })
-            .catch(error => console.error('Error loading rooms:', error));
-    }
-
-    // Call loadRoomsForBranch when the modal is shown
-
-
-    // Set the check-in date and room for the guest
-    function setCheckinDate(guestId) {
-        let checkinDate = document.getElementById('checkin_date' + guestId).value;
-        let roomId = document.getElementById('room_select' + guestId).value;
-
-        if (checkinDate && roomId) {
-            // Make AJAX request to update the check-in date and room assignment
-            fetch('/guest/checkin/' + guestId, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                    },
-                    body: JSON.stringify({
-                        checkin_date: checkinDate,
-                        room_id: roomId
-                    })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        alert(data.message);
-                        // Update the UI to show the new check-in date and room
-                        document.getElementById('checkin_date_display' + guestId).textContent = data.checkin_date;
-                        // Close the modal
-                        let modal = document.getElementById('checkinModal' + guestId);
-                        let modalInstance = bootstrap.Modal.getInstance(modal);
-                        modalInstance.hide();
-                        location.reload();
-                        window.location.reload();
-                    } else {
-                        alert('Error updating check-in information.');
-                    }
-                })
-                .catch(error => console.error('Error:', error));
-        }
-    }
-
-    function setCheckoutDate(guestId) {
-        let checkoutDate = document.getElementById('checkout_date' + guestId).value;
-
-        if (checkoutDate) {
-            // Make AJAX request to update the check-out date
-            fetch('/guest/checkout/' + guestId, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                    },
-                    body: JSON.stringify({
-                        checkout_date: checkoutDate
-                    })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        alert(data.message);
-                        // Update the UI to show the new check-out date
-                        document.getElementById('checkout_date_display' + guestId).textContent = data.checkout_date;
-                        // Close the modal
-                        let modal = document.getElementById('checkoutModal' + guestId);
-                        let modalInstance = bootstrap.Modal.getInstance(modal);
-                        modalInstance.hide();
-                        window.location.reload();
-                    } else {
-                        alert('Error updating check-out date.');
-                    }
-                })
-                .catch(error => console.error('Error:', error));
-        }
-    }
+    })
 </script>
+
+@push('scripts')
+    <script>
+        $(document).ready(function() {
+            $('#roomsTable').DataTable({
+                responsive: true, // Membuat tabel responsif pada ukuran layar kecil
+                paging: true, // Mengaktifkan pagination
+                searching: true, // Mengaktifkan fitur pencarian
+                ordering: true, // Mengaktifkan fitur pengurutan
+                info: true, // Menampilkan informasi jumlah data
+                autoWidth: false // Menonaktifkan pengaturan lebar otomatis
+            });
+        });
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const checkinButtons = document.querySelectorAll('.set-checkin-btn');
+            const checkoutButtons = document.querySelectorAll('.set-checkout-btn');
+            const selectRoomButtons = document.querySelectorAll('.select-room-btn');
+
+
+
+            selectRoomButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const roomId = this.getAttribute('data-room-id');
+                    const guestId = this.getAttribute('data-guest-id');
+
+                    fetch(`/guest/plot-room/${guestId}`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            },
+                            body: JSON.stringify({
+                                room_id: roomId,
+                            }),
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                alert(data.message);
+                                const modal = bootstrap.Modal.getInstance(document
+                                    .querySelector(`#plotRoomModal${guestId}`));
+                                modal.hide();
+                                location.reload();
+                            } else {
+                                alert('Error: ' + data.message);
+                            }
+                        })
+                        .catch(error => {
+                            alert('Terjadi kesalahan: ' + error.message);
+                        });
+                });
+            });
+
+            // checkinButtons.forEach(button => {
+            //     button.addEventListener('click', function() {
+            //         console.log('Tombol Check-in diklik!');
+            //         const guestId = this.getAttribute('data-guest-id');
+            //         const today = new Date().toISOString().split('T')[0];
+            //         console.log(today);
+            //     });
+            // });
+            // checkinButtons.forEach(button => {
+            //     button.addEventListener('click', function() {
+            //         console.log('Tombol Check-in diklik!');
+            //         const guestId = this.getAttribute('data-guest-id');
+            //         const today = new Date().toISOString().split('T')[
+            //             0];
+            //         console.log(today);
+
+            //         fetch(`/guest/checkin/${guestId}`, {
+            //                 method: 'POST',
+            //                 headers: {
+            //                     'Content-Type': 'application/json',
+            //                     'X-CSRF-TOKEN': '{{ csrf_token() }}', // Pastikan CSRF token ada
+            //                 },
+            //                 body: JSON.stringify({
+            //                     checkin_date: today,
+            //                 }),
+            //             })
+            //             .then(response => response.json())
+            //             .then(data => {
+            //                 if (data.success) {
+            //                     alert(data.message);
+            //                     location.reload(); // Reload halaman setelah sukses
+            //                 } else {
+            //                     alert('Error: ' + data.message);
+            //                 }
+            //             })
+            //             .catch(error => {
+            //                 alert('Terjadi kesalahan: ' + error.message);
+            //             });
+            //     });
+            // });
+
+            checkoutButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const guestId = this.getAttribute('data-guest-id');
+                    const today = new Date().toISOString().split('T')[0]; // Tanggal hari ini
+
+                    fetch(`/guest/checkout/${guestId}`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            },
+                            body: JSON.stringify({
+                                checkout_date: today,
+                            }),
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                alert(data.message);
+                                location.reload();
+                            } else {
+                                alert('Error: ' + data.message);
+                            }
+                        })
+                        .catch(error => {
+                            alert('Terjadi kesalahan: ' + error.message);
+                        });
+                });
+            });
+
+
+        });
+    </script>
+@endpush

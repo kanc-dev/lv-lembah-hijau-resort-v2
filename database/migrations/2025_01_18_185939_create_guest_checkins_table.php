@@ -13,11 +13,11 @@ return new class extends Migration
     {
         Schema::create('guest_checkins', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('guest_id'); // Relasi ke tamu
-            $table->unsignedBigInteger('room_id'); // Kamar yang ditempati
-            $table->date('tanggal_checkin');
-            $table->date('tanggal_checkout')->nullable();
-            $table->foreign('guest_id')->references('id')->on('guests')->onDelete('cascade');
+            $table->unsignedBigInteger('guest_id')->nullable();
+            $table->unsignedBigInteger('room_id');
+            $table->datetime('tanggal_checkin')->nullable();
+            $table->datetime('tanggal_checkout')->nullable();
+            // $table->foreign('guest_id')->references('id')->on('guests')->onDelete('cascade');
             $table->foreign('room_id')->references('id')->on('rooms')->onDelete('cascade');
             $table->timestamps();
         });

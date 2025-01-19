@@ -26,10 +26,11 @@ class RoomController extends Controller
         $branchId = auth()->user()->branch_id;
 
         if ($branchId == 0) {
-            $rooms = Room::with('branch')->get();
+            $rooms = Room::with(['branch', 'guestCheckins.guest.events'])->get();
         } else {
-            $rooms = Room::with('branch')->where('branch_id', $branchId)->get();
+            $rooms = Room::with(['branch', 'guestCheckins.guest.events'])->where('branch_id', $branchId)->get();
         }
+
 
         $data['rooms'] = $rooms;
         $data['page_title'] = 'Data Kamar';

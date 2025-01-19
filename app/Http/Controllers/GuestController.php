@@ -19,11 +19,20 @@ class GuestController extends Controller
      */
     public function index()
     {
+        $user = Auth::user();
+        $branchId = $user->branch_id; // Asumsi field branch_id ada di tabel users
 
-        $guests = Guest::with('branch.rooms', 'events', 'guestcheckins.room')->get();
+        if ($branchId) {
+            $rooms = Room::where('branch_id', $branchId)->get();
+            $guests = Guest::with('branch.rooms', 'events', 'guestcheckins.room')->where('branch_id', $branchId)->get();
+        } else {
+            $rooms = Room::all();
+            $guests = Guest::with('branch.rooms', 'events', 'guestcheckins.room')->get();
+        }
         $data['guests'] = $guests;
+        $data['rooms'] = $rooms;
         $data['page_title'] = 'Data Tamu';
-        // dd($data['guests']);
+
         return view('pages.guest.index', compact('data'));
     }
 
@@ -61,6 +70,7 @@ class GuestController extends Controller
             'no_polisi' => 'required|string|max:255',
             'no_hp' => 'required|string|max:15',
             'email' => 'required|email|max:255',
+            'kantor_cabang' => 'required|string|max:255',
             'tanggal_rencana_checkin' => 'required|date',
             'tanggal_rencana_checkout' => 'required|date',
             'event_id' => 'required|exists:events,id',
@@ -76,6 +86,7 @@ class GuestController extends Controller
             'no_polisi' => $request->no_polisi,
             'no_hp' => $request->no_hp,
             'email' => $request->email,
+            'kantor_cabang' => $request->kantor_cabang,
             'tanggal_rencana_checkin' => $request->tanggal_rencana_checkin,
             'tanggal_rencana_checkout' => $request->tanggal_rencana_checkout,
         ]);
@@ -119,6 +130,7 @@ class GuestController extends Controller
             'batch' => 'required|string|max:255',
             'kendaraan' => 'required|string|max:255',
             'no_polisi' => 'required|string|max:255',
+            'kantor_cabang' => 'required|string|max:255',
             'no_hp' => 'required|string|max:15',
             'email' => 'required|email|max:255',
             'tanggal_rencana_checkin' => 'required|date',
@@ -138,6 +150,7 @@ class GuestController extends Controller
             'no_polisi' => $request->no_polisi,
             'no_hp' => $request->no_hp,
             'email' => $request->email,
+            'kantor_cabang' => $request->kantor_cabang,
             'tanggal_rencana_checkin' => $request->tanggal_rencana_checkin,
             'tanggal_rencana_checkout' => $request->tanggal_rencana_checkout,
             'room_id' => $request->room_id,
@@ -156,40 +169,129 @@ class GuestController extends Controller
         return redirect()->route('guest.index')->with('success', 'Guest deleted successfully');
     }
 
-    public function setCheckinDate(Request $request, Guest $guest)
+    public function plotRoom(Request $request, $guestId)
+    {
+        $request->validate([
+            'room_id' => 'required|exists:rooms,id',
+        ]);
+
+        try {
+            $guest = Guest::findOrFail($guestId);
+
+            // Temukan kamar yang dipilih
+            $room = Room::findOrFail($request->input('room_id'));
+
+            // Pastikan kamar tidak dalam status unavailable
+            if ($room->status == 'unavailable') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Kamar tidak tersedia.',
+                ], 400);
+            }
+
+            // Periksa apakah kapasitas kamar sudah penuh
+            if ($room->terisi >= $room->kapasitas) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Kamar sudah penuh.',
+                ], 400);
+            }
+
+            // Tambah 1 tamu ke kolom terisi
+            $room->terisi += 1;
+
+            // Jika terisi == kapasitas, ubah status kamar menjadi 'unavailable'
+            if ($room->terisi == $room->kapasitas) {
+                $room->status = 'unavailable';
+            }
+
+            // Simpan perubahan pada kamar
+            $room->save();
+
+            // Simpan kamar yang dipilih ke guest_checkins
+            GuestCheckin::updateOrCreate(
+                ['guest_id' => $guestId],
+                ['room_id' => $room->id]
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Kamar berhasil dipilih untuk tamu.',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function setCheckinDate(Request $request, $guestId)
     {
         $request->validate([
             'checkin_date' => 'required|date',
         ]);
 
-        // Update the check-in date
-        $guest->tanggal_checkin = $request->input('checkin_date');
-        $guest->save();
+        try {
+            $guest = Guest::findOrFail($guestId);
+            $checkinDate = \Carbon\Carbon::parse($request->input('checkin_date'))->toDateString();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Check-in date updated successfully.',
-            'checkin_date' => $guest->tanggal_checkin,
-        ]);
+            $checkin = GuestCheckin::updateOrCreate(
+                ['guest_id' => $guestId],
+                [
+                    'tanggal_checkin' => $checkinDate,
+                    // 'room_id' => $guest->room_id ?? null,
+                ]
+            );
+
+            return redirect()->back()->with('success', 'Check-in berhasil dilakukan.');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+        }
     }
 
-    // Method to update check-out date
-    public function setCheckoutDate(Request $request, Guest $guest)
+    public function setCheckoutDate(Request $request, $guestId)
     {
         $request->validate([
             'checkout_date' => 'required|date',
         ]);
 
-        // Update the check-out date
-        $guest->tanggal_checkout = $request->input('checkout_date');
-        $guest->save();
+        try {
+            $guest = Guest::findOrFail($guestId);
+            $checkinDate = \Carbon\Carbon::parse($request->input('checkout_date'))->toDateString();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Check-out date updated successfully.',
-            'checkout_date' => $guest->tanggal_checkout,
-        ]);
+            // Temukan record check-in tamu
+            $checkin = GuestCheckin::where('guest_id', $guestId)->first();
+
+            if (!$checkin) {
+                return redirect()->back()->with('error', 'Tamu tidak ditemukan untuk check-out.');
+            }
+
+            // Ambil kamar yang digunakan tamu
+            $room = Room::findOrFail($checkin->room_id);
+
+            // Update tanggal check-out di GuestCheckin
+            $checkin->update([
+                'tanggal_checkout' => $checkinDate,
+            ]);
+
+            // Kurangi 1 dari kolom terisi
+            $room->terisi -= 1;
+
+            // Jika terisi < kapasitas, ubah status kamar menjadi 'available'
+            if ($room->terisi < $room->kapasitas) {
+                $room->status = 'available';
+            }
+
+            // Simpan perubahan pada kamar
+            $room->save();
+
+            return redirect()->back()->with('success', 'Check-out berhasil dilakukan. Kapasitas kamar diperbarui.');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+        }
     }
+
 
     public function getAvailableRooms($guestId)
     {

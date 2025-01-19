@@ -13,10 +13,10 @@
                     height: 350
                 },
                 labels: labels,
-                title: {
-                    text: 'Persentase Kamar Terisi',
-                    align: 'left'
-                },
+                // title: {
+                //     text: 'Persentase Occupancy',
+                //     align: 'left'
+                // },
                 tooltip: {
                     y: {
                         formatter: function(val) {

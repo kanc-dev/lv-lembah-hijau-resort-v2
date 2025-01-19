@@ -21,4 +21,9 @@ class Event extends Model
     {
         return $this->belongsToMany(Guest::class, 'event_guest');
     }
+
+    public function branch()
+    {
+        return $this->belongsTo(Branch::class);
+    }
 }

@@ -26,4 +26,18 @@ class Room extends Model
     {
         return $this->hasMany(GuestCheckin::class, 'room_id');
     }
+
+    public function events()
+    {
+        return $this->hasManyThrough(
+            Event::class,
+            GuestCheckin::class,
+            'room_id',   // Foreign key di guest_checkins
+            'id',        // Primary key di events
+            'id',        // Primary key di rooms
+            'guest_id'   // Foreign key di guest_checkins
+        )->join('event_guest', 'event_guest.event_id', '=', 'events.id')
+            ->join('guests', 'guests.id', '=', 'event_guest.guest_id')
+            ->select('events.*');
+    }
 }

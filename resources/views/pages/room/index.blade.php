@@ -50,9 +50,12 @@
                                     <th>Unit</th>
                                     <th>Room Name</th>
                                     <th>Type</th>
-                                    <th>Price</th>
+                                    {{-- <th>Price</th> --}}
                                     <th>Status</th>
-                                    <th>Capacity</th>
+                                    <th>Kapasitas</th>
+                                    <th>Terisi</th>
+                                    {{-- <th>Tersedia</th> --}}
+                                    <th>Event</th>
                                     <th>Action</th>
                                 </tr>
                             </thead>
@@ -69,11 +72,26 @@
                                         <td>{{ $room->branch->name ?? 'N/A' }}</td>
                                         <td><a href="#!">{{ $room['nama'] }}</a></td>
                                         <td>{{ $room['tipe'] }}</td>
-                                        <td>{{ number_format($room['harga'], 0, ',', '.') }}</td>
+                                        {{-- <td>{{ number_format($room['harga'], 0, ',', '.') }}</td> --}}
                                         <td><span
                                                 class="badge {{ $room['status'] == 'available' ? 'badge-soft-info' : 'badge-soft-secondary' }}">{{ ucfirst($room['status']) }}</span>
                                         </td>
                                         <td>{{ $room['kapasitas'] }}</td>
+                                        <td>{{ $room['terisi'] ?? 0 }}</td>
+                                        {{-- <td>{{ $room['kapasitas'] - $room['terisi'] }}</td> --}}
+                                        <td>
+                                            @php
+                                                $events = $room->guestCheckins->flatMap(function ($checkin) {
+                                                    return $checkin->guest->events ?? [];
+                                                });
+                                            @endphp
+
+                                            @if ($events->isNotEmpty())
+                                                <span>{{ $events[0]->nama_kelas }}</span><br>
+                                            @else
+                                                <span>-</span>
+                                            @endif
+                                        </td>
                                         <td>
                                             <div class="dropdown d-inline-block">
                                                 <button class="btn btn-soft-secondary btn-sm dropdown" type="button"

@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Event;
 use App\Http\Requests\StoreEventRequest;
 use App\Http\Requests\UpdateEventRequest;
+use App\Models\Branch;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class EventController extends Controller
 {
@@ -20,7 +22,8 @@ class EventController extends Controller
 
     public function index()
     {
-        $events = Event::all();
+
+        $events = Event::with('branch')->get();
         $data['events'] = $events;
         $data['page_title'] = 'Data Event';
         return view('pages.event.index', compact('data'));
@@ -31,6 +34,16 @@ class EventController extends Controller
      */
     public function create()
     {
+        $user = Auth::user();
+        $branchId = $user->branch_id;
+
+        if ($branchId) {
+            $branches = Branch::where('id', $branchId)->get();
+        } else {
+            $branches = Branch::all();
+        }
+
+        $data['branches'] = $branches;
         $data['page_title'] = 'Tambah Event';
         return view('pages.event.create', compact('data'));
     }
@@ -43,6 +56,7 @@ class EventController extends Controller
         $request->validate([
             'nama_kelas' => 'required|string|max:255',
             'deskripsi' => 'required|string|max:255',
+            'branch_id' => 'numeric',
         ]);
 
         Event::create($request->all());
@@ -55,11 +69,13 @@ class EventController extends Controller
         $request->validate([
             'nama_kelas' => 'required|string|max:255',
             'deskripsi' => 'required|string',
+            'branch_id' => 'numeric',
         ]);
 
         $event = Event::create([
             'nama_kelas' => $request->nama_kelas,
             'deskripsi' => $request->deskripsi,
+            'branch_id' => $request->branch_id
         ]);
 
         return response()->json($event);
@@ -89,6 +105,7 @@ class EventController extends Controller
         $request->validate([
             'nama_kelas' => 'required|string|max:255',
             'deskripsi' => 'required|string|max:255',
+            'branch_id' => 'numeric',
         ]);
 
         $event->update($request->all());

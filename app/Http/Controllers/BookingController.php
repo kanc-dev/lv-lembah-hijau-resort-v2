@@ -35,11 +35,12 @@ class BookingController extends Controller
 
         if ($branchId) {
             $branches = Branch::where('id', $branchId)->get();
+            $events = Event::where('branch_id', $branchId)->get();
         } else {
             $branches = Branch::all();
+            $events = Event::all();
         }
 
-        $events = Event::all();
         $rooms = Room::with('branch')->get();
 
         $data['rooms'] = $rooms;

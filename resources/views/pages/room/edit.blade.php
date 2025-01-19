@@ -51,10 +51,15 @@
                                         <input type="text" class="form-control" id="tipe" name="tipe"
                                             value="{{ old('tipe', $data['room']->tipe) }}" required>
                                     </div>
-                                    <div class="mb-3">
+                                    {{-- <div class="mb-3">
                                         <label for="harga" class="form-label">Harga *</label>
                                         <input type="number" class="form-control" id="harga" name="harga"
                                             value="{{ old('harga', $data['room']->harga) }}" required>
+                                    </div> --}}
+                                    <div class="mb-3">
+                                        <label for="kapasitas" class="form-label">Kapasitas *</label>
+                                        <input type="number" class="form-control" id="kapasitas" name="kapasitas"
+                                            value="{{ old('kapasitas', $data['room']->kapasitas) }}" required>
                                     </div>
                                 </div>
 

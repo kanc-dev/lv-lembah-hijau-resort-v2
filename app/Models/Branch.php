@@ -41,4 +41,9 @@ class Branch extends Model
     {
         return $this->hasMany(Booking::class, 'unit_destination_id');
     }
+
+    public function events()
+    {
+        return $this->hasMany(Event::class);
+    }
 }

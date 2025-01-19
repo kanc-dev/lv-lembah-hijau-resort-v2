@@ -68,23 +68,6 @@
                                     </div>
 
                                     <div class="mb-3">
-                                        <label for="harga" class="form-label">Harga <span
-                                                class="text-danger">*</span></label>
-                                        <input type="number" class="form-control @error('harga') is-invalid @enderror"
-                                            id="harga" name="harga" value="{{ old('harga') }}" required>
-                                        <div class="invalid-feedback">
-                                            @error('harga')
-                                                {{ $message }}
-                                            @else
-                                                Harap masukkan harga kamar.
-                                            @enderror
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Kolom 2 -->
-                                <div class="col-md-6">
-                                    <div class="mb-3">
                                         <label for="kapasitas" class="form-label">Kapasitas <span
                                                 class="text-danger">*</span></label>
                                         <input type="number" class="form-control @error('kapasitas') is-invalid @enderror"
@@ -97,6 +80,24 @@
                                             @enderror
                                         </div>
                                     </div>
+                                    {{-- <div class="mb-3">
+                                        <label for="harga" class="form-label">Harga <span
+                                                class="text-danger">*</span></label>
+                                        <input type="number" class="form-control @error('harga') is-invalid @enderror"
+                                            id="harga" name="harga" value="{{ old('harga') }}" required>
+                                        <div class="invalid-feedback">
+                                            @error('harga')
+                                                {{ $message }}
+                                            @else
+                                                Harap masukkan harga kamar.
+                                            @enderror
+                                        </div>
+                                    </div> --}}
+                                </div>
+
+                                <!-- Kolom 2 -->
+                                <div class="col-md-6">
+
 
                                     <div class="mb-3">
                                         <label for="unit" class="form-label">Unit / Branch <span
