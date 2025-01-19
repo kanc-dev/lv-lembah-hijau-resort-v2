@@ -170,7 +170,8 @@
                                                 <div>
                                                     <p class="mb-0 fw-medium text-muted">Total Kamar Terisi</p>
                                                     <h2 class="mt-4 ff-secondary fw-semibold"><span class="counter-value"
-                                                            data-target="{{ $data['total_room_occupied'] }}">0</span>%</h2>
+                                                            data-target="{{ number_format($data['total_room_occupied'], 0) }}">0</span>%
+                                                    </h2>
                                                 </div>
                                                 <div>
                                                     <div class="flex-shrink-0 avatar-sm">
@@ -190,7 +191,8 @@
                                                 <div>
                                                     <p class="mb-0 fw-medium text-muted">Total Kamar Kosong</p>
                                                     <h2 class="mt-4 ff-secondary fw-semibold"><span class="counter-value"
-                                                            data-target="{{ $data['total_room_empty'] }}">0</span>%</h2>
+                                                            data-target="{{ number_format($data['total_room_empty'], 0) }}">0</span>%
+                                                    </h2>
                                                 </div>
                                                 <div>
                                                     <div class="flex-shrink-0 avatar-sm">
@@ -457,7 +459,7 @@
                                                 <div>
                                                     <p class="mb-0 fw-medium text-muted">Total Kamar Terisi</p>
                                                     <h2 class="mt-4 ff-secondary fw-semibold"><span class="counter-value"
-                                                            data-target="{{ $data['total_room_occupied'] }}">0</span>%
+                                                            data-target="{{ number_format($data['total_room_occupied'], 0) }}">0</span>%
                                                     </h2>
                                                 </div>
                                                 <div>
@@ -478,7 +480,8 @@
                                                 <div>
                                                     <p class="mb-0 fw-medium text-muted">Total Kamar Kosong</p>
                                                     <h2 class="mt-4 ff-secondary fw-semibold"><span class="counter-value"
-                                                            data-target="{{ $data['total_room_empty'] }}">0</span>%</h2>
+                                                            data-target="{{ number_format($data['total_room_empty'], 0) }}">0</span>%
+                                                    </h2>
                                                 </div>
                                                 <div>
                                                     <div class="flex-shrink-0 avatar-sm">
