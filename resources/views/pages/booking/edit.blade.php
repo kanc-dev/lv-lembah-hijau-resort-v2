@@ -83,7 +83,7 @@
                                         <label for="unit_origin_id" class="form-label">Unit Asal <span
                                                 class="text-danger">*</span></label>
                                         <select class="form-select @error('unit_origin_id') is-invalid @enderror"
-                                            id="unit_origin_id" name="unit_origin_id" required>
+                                            id="unit_origin_id" name="unit_origin_id" disabled>
                                             <option value="">Pilih Unit Asal</option>
                                             @foreach ($data['branches'] as $branch)
                                                 <option value="{{ $branch->id }}"
@@ -161,7 +161,7 @@
                                             @enderror
                                         </div>
                                     </div>
-                                    <div class="mb-3">
+                                    {{-- <div class="mb-3">
                                         <label for="rooms" class="form-label">Pilih Kamar <span
                                                 class="text-danger">*</span></label>
                                         <select class="form-control" id="rooms" name="rooms[]" multiple>
@@ -179,7 +179,7 @@
                                                 Harap pilih kamar.
                                             @enderror
                                         </div>
-                                    </div>
+                                    </div> --}}
                                 </div>
                             </div>
 

@@ -101,8 +101,8 @@ class BookingController extends Controller
         $request->validate([
             'event_id' => 'required|exists:events,id',
             'jumlah_peserta' => 'required|integer',
-            'rooms' => 'required|array', // Ensure 'rooms' is an array
-            'unit_origin_id' => 'required|exists:branches,id',
+            // 'rooms' => 'required|array',
+            // 'unit_origin_id' => 'required|exists:branches,id',
             'unit_destination_id' => 'required|exists:branches,id',
             'tanggal_rencana_checkin' => 'required|date',
             'tanggal_rencana_checkout' => 'required|date',
@@ -111,13 +111,13 @@ class BookingController extends Controller
         // Get the current booking data
         $booking->event_id = $request->input('event_id');
         $booking->jumlah_peserta = $request->input('jumlah_peserta');
-        $booking->unit_origin_id = $request->input('unit_origin_id');
+        // $booking->unit_origin_id = $request->input('unit_origin_id');
         $booking->unit_destination_id = $request->input('unit_destination_id');
         $booking->tanggal_rencana_checkin = $request->input('tanggal_rencana_checkin');
         $booking->tanggal_rencana_checkout = $request->input('tanggal_rencana_checkout');
 
         // Update rooms, converting to JSON format
-        $booking->rooms = json_encode($request->input('rooms'));
+        // $booking->rooms = json_encode($request->input('rooms'));
 
         // Save the changes
         $booking->save();
