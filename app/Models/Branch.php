@@ -26,4 +26,19 @@ class Branch extends Model
     {
         return $this->hasMany(Guest::class);
     }
+
+    public function bookings()
+    {
+        return $this->hasMany(Booking::class);
+    }
+
+    public function originBookings()
+    {
+        return $this->hasMany(Booking::class, 'unit_origin_id');
+    }
+
+    public function destinationBookings()
+    {
+        return $this->hasMany(Booking::class, 'unit_destination_id');
+    }
 }

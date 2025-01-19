@@ -1,21 +1,20 @@
-<div id="branch-guest-chart"></div>
-
+<div id="branch-occupancy-bar"></div>
 
 <script>
-    // Ambil data dari API
-    fetch('http://lv-lembah-hijau-resort-hotel.test:8088/branch-guests?filter=daily')
+    // Ambil data dari API untuk occupancy
+    fetch('/branch-occupancy-accumulated') // Gantilah URL API sesuai kebutuhan
         .then(response => response.json())
         .then(data => {
-            // Opsi untuk chart
-            var options = {
-                series: data.series, // Menggunakan data series yang diterima dari API
+            const options = {
+                series: data.series,
                 chart: {
-                    type: 'bar', // Jenis chart yang digunakan
+                    type: 'bar',
                     height: 350
                 },
+                // colors: ['#00c47f'],
                 plotOptions: {
                     bar: {
-                        horizontal: false, // Chart vertikal
+                        horizontal: false,
                         columnWidth: '55%',
                         borderRadius: 5,
                         borderRadiusApplication: 'end'
@@ -30,16 +29,12 @@
                     colors: ['transparent']
                 },
                 xaxis: {
-                    categories: data.categories, // Data kategori (tanggal) yang diterima dari API
+                    categories: data.categories,
                 },
                 yaxis: {
                     title: {
-                        text: 'Jumlah Tamu'
-                    },
-                    min: 0, // Menentukan nilai minimum pada sumbu Y
-                    max: Math.max(...data.series.flatMap(s => s.data)) +
-                    2, // Memberikan sedikit ruang di atas nilai tertinggi
-                    tickAmount: 6,
+                        text: 'Number of Occupied Rooms'
+                    }
                 },
                 fill: {
                     opacity: 1
@@ -47,14 +42,14 @@
                 tooltip: {
                     y: {
                         formatter: function(val) {
-                            return val + " tamu"; // Format tooltip untuk menampilkan jumlah tamu
+                            return val
                         }
                     }
                 }
             };
 
             // Membuat dan menampilkan chart
-            var chart = new ApexCharts(document.querySelector("#branch-guest-chart"), options);
+            let chart = new ApexCharts(document.querySelector("#branch-occupancy-bar"), options);
             chart.render();
         })
         .catch(error => console.error('Error:', error)); // Menangani error jika terjadi

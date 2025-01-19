@@ -9,6 +9,7 @@ use App\Models\Branch;
 use App\Models\Event;
 use App\Models\Room;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class BookingController extends Controller
 {
@@ -28,13 +29,23 @@ class BookingController extends Controller
      */
     public function create()
     {
+
+        $user = Auth::user();
+        $branchId = $user->branch_id; // Asumsi field branch_id ada di tabel users
+
+        if ($branchId) {
+            $branches = Branch::where('id', $branchId)->get();
+        } else {
+            $branches = Branch::all();
+        }
+
         $events = Event::all();
-        $branches = Branch::all();
         $rooms = Room::with('branch')->get();
 
         $data['rooms'] = $rooms;
         $data['events'] = $events;
         $data['branches'] = $branches;
+        $data['branch_destination'] = Branch::all();
         $data['page_title'] = 'Tambah Booking';
         return view('pages.booking.create', compact('data'));
     }
@@ -47,8 +58,8 @@ class BookingController extends Controller
         $request->validate([
             'event_id' => 'required|exists:events,id',
             'jumlah_peserta' => 'required|integer',
-            'rooms' => 'required|array',  // Ubah 'rooms' menjadi 'room_id' dan validasi sebagai array
-            'rooms.*' => 'exists:rooms,id', // Validasi setiap ID dalam array room_id ada di tabel rooms
+            // 'rooms' => 'required|array',
+            // 'rooms.*' => 'exists:rooms,id',
             'unit_origin_id' => 'required|exists:branches,id',
             'unit_destination_id' => 'required|exists:branches,id',
             'tanggal_rencana_checkin' => 'required|date',

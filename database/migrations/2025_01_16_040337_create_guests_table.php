@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('nama');
             $table->string('jenis_kelamin');
             $table->foreignId('branch_id')->constrained('branches');
+            $table->string('kantor_cabang');
             $table->string('batch')->nullable();
             $table->string('kendaraan');
             $table->string('no_polisi');

@@ -130,26 +130,21 @@
                                 <!-- Kolom 2 -->
                                 <div class="col-md-6">
                                     <div class="mb-3">
-                                        <label for="branch_id" class="form-label">Branch <span
-                                                class="text-danger">*</span></label>
-                                        <select class="form-select @error('branch_id') is-invalid @enderror" id="branch_id"
-                                            name="branch_id" required>
-                                            <option value="">Pilih Branch</option>
-                                            @foreach ($data['branches'] as $branch)
-                                                <option value="{{ $branch->id }}"
-                                                    {{ old('branch_id') == $branch->id ? 'selected' : '' }}>
-                                                    {{ $branch->name }}
-                                                </option>
-                                            @endforeach
-                                        </select>
+                                        <label for="kantor_cabang" class="form-label">Kantor Cabang
+                                            <span class="text-danger">*</span></label>
+                                        </label>
+                                        <input type="text"
+                                            class="form-control @error('kantor_cabang') is-invalid @enderror"
+                                            id="kantor_cabang" name="kantor_cabang" value="{{ old('kantor_cabang') }}">
                                         <div class="invalid-feedback">
-                                            @error('branch_id')
+                                            @error('kantor_cabang')
                                                 {{ $message }}
                                             @else
-                                                Harap pilih branch.
+                                                Harap masukkan Kantor Cabang.
                                             @enderror
                                         </div>
                                     </div>
+
 
                                     <div class="mb-3">
                                         <label for="event_id" class="form-label">Event <span
@@ -215,6 +210,28 @@
                                                 {{ $message }}
                                             @else
                                                 Harap masukkan tanggal rencana check-out.
+                                            @enderror
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="branch_id" class="form-label">Branch / Unit <span
+                                                class="text-danger">*</span></label>
+                                        <select class="form-select @error('branch_id') is-invalid @enderror"
+                                            id="branch_id" name="branch_id" required>
+                                            <option value="">Pilih Branch / Unit</option>
+                                            @foreach ($data['branches'] as $branch)
+                                                <option value="{{ $branch->id }}"
+                                                    {{ old('branch_id') == $branch->id ? 'selected' : '' }}>
+                                                    {{ $branch->name }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                        <div class="invalid-feedback">
+                                            @error('branch_id')
+                                                {{ $message }}
+                                            @else
+                                                Harap pilih branch.
                                             @enderror
                                         </div>
                                     </div>

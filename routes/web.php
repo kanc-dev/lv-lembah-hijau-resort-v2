@@ -11,17 +11,23 @@ use App\Http\Controllers\UserController;
 use App\Models\Booking;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('welcome');
-});
 
 Auth::routes();
 
 
 Route::middleware('auth')->group(function () {
+    Route::get('/', function () {
+        return redirect()->route('home.index');
+    });
     Route::get('/home', [HomeController::class, 'index'])->name('home.index');
     Route::get('/branch-guests', [HomeController::class, 'getBranchGuestData'])->name('branch-guests');
-    Route::get('/branch-room-occupancy', [HomeController::class, 'getRoomOccupancy'])->name('branch-room-occupancy');
+    Route::get('/branch-occupancy-chart', [HomeController::class, 'getRoomOccupancy'])->name('branch-occupancy-chart');
+    Route::get('/branch-occupancy-accumulated', [HomeController::class, 'getRoomOccupancyAccumulated'])->name('branch-occupancy-accumulated');
+    Route::get('/branch-occupancy-pie', [HomeController::class, 'getRoomOccupancyPieChart'])->name('branch-occupancy-pie');
+    Route::get('/event-timeline', [HomeController::class, 'getEventTimelineData'])->name('event-timeline');
+
+    Route::get('/room-occupancy-data', [HomeController::class, 'getOccupancyChartData'])->name('room-occupancy-data');
+    Route::get('/branch-room-occupancy-data', [HomeController::class, 'getBranchOccupancyChartData'])->name('branch-room-occupancy-data');
 
 
     // Route::get('/booking', [BookingController::class, 'index'])->name('booking.index');

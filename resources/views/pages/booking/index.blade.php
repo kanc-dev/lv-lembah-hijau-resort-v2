@@ -60,17 +60,21 @@
                                         <td>{{ $booking->jumlah_peserta }}</td>
                                         <td>{{ $booking->originBranch->name }}</td>
                                         <td>{{ $booking->destinationBranch->name }}</td>
-                                        <td>{{ $booking->tanggal_rencana_checkin }}</td>
-                                        <td>{{ $booking->tanggal_rencana_checkout }}</td>
+                                        <td>{{ date('d, M Y', strtotime($booking->tanggal_rencana_checkin)) }} </td>
+                                        <td>{{ date('d, M Y', strtotime($booking->tanggal_rencana_checkout)) }} </td>
                                         <td>
-                                            @php
-                                                // Check if 'rooms' is a JSON string (i.e., it's not already an array)
-                                                $rooms = is_array($booking->rooms)
-                                                    ? $booking->rooms
-                                                    : json_decode($booking->rooms, true);
-                                                $totalRooms = count($rooms); // Get the total number of rooms
-                                            @endphp
-                                            {{ $totalRooms }}
+                                            @if (isset($booking->rooms))
+                                                @php
+                                                    // Check if 'rooms' is a JSON string (i.e., it's not already an array)
+                                                    $rooms = is_array($booking->rooms)
+                                                        ? $booking->rooms
+                                                        : json_decode($booking->rooms, true);
+                                                    $totalRooms = count($rooms); // Get the total number of rooms
+                                                @endphp
+                                                {{ $totalRooms }}
+                                            @else
+                                                0
+                                            @endif
                                         </td>
                                         <td>
                                             <a href="{{ route('booking.edit', $booking->id) }}"

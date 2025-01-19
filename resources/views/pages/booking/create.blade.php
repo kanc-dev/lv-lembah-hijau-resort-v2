@@ -82,7 +82,9 @@
                                                 class="text-danger">*</span></label>
                                         <select class="form-select @error('unit_origin_id') is-invalid @enderror"
                                             id="unit_origin_id" name="unit_origin_id" required>
-                                            <option value="">Pilih Unit Asal</option>
+                                            @if (count($data['branches']) > 1)
+                                                <option value="">Pilih Unit Asal</option>
+                                            @endif
                                             @foreach ($data['branches'] as $branch)
                                                 <option value="{{ $branch->id }}"
                                                     {{ old('unit_origin_id') == $branch->id ? 'selected' : '' }}>
@@ -105,7 +107,7 @@
                                         <select class="form-select @error('unit_destination_id') is-invalid @enderror"
                                             id="unit_destination_id" name="unit_destination_id" required>
                                             <option value="">Pilih Unit Tujuan</option>
-                                            @foreach ($data['branches'] as $branch)
+                                            @foreach ($data['branch_destination'] as $branch)
                                                 <option value="{{ $branch->id }}"
                                                     {{ old('unit_destination_id') == $branch->id ? 'selected' : '' }}>
                                                     {{ $branch->name }}
@@ -157,7 +159,7 @@
                                             @enderror
                                         </div>
                                     </div>
-                                    <div id="room-info" class="mt-3">
+                                    {{-- <div id="room-info" class="mt-3">
                                         <p id="total-rooms">Total Kamar: 0</p>
                                         <p id="total-capacity">Total Kapasitas: 0</p>
                                     </div>
@@ -181,8 +183,7 @@
                                                 Harap pilih kamar.
                                             @enderror
                                         </div>
-                                    </div>
-                                    <!-- Display Total Rooms and Total Capacity -->
+                                    </div> --}}
 
                                 </div>
                             </div>

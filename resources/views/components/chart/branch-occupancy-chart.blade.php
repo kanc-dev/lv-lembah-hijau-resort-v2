@@ -1,9 +1,8 @@
-<div id="branch-guest-chart"></div>
-
+<div id="branch-occupancy-chart"></div>
 
 <script>
-    // Ambil data dari API
-    fetch('/branch-guests?filter=daily')
+    // Ambil data dari API untuk occupancy
+    fetch('/branch-occupancy-chart') // Gantilah URL API sesuai kebutuhan
         .then(response => response.json())
         .then(data => {
             // Opsi untuk chart
@@ -34,12 +33,17 @@
                 },
                 yaxis: {
                     title: {
-                        text: 'Jumlah Tamu'
+                        text: 'Jumlah Kamar Terisi' // Mengubah judul sesuai dengan occupancy
                     },
                     min: 0, // Menentukan nilai minimum pada sumbu Y
                     max: Math.max(...data.series.flatMap(s => s.data)) +
                         2, // Memberikan sedikit ruang di atas nilai tertinggi
                     tickAmount: 6,
+                    labels: {
+                        formatter: function(value) {
+                            return value.toFixed(0); // Format angka tanpa koma
+                        }
+                    }
                 },
                 fill: {
                     opacity: 1
@@ -47,14 +51,14 @@
                 tooltip: {
                     y: {
                         formatter: function(val) {
-                            return val + " tamu"; // Format tooltip untuk menampilkan jumlah tamu
+                            return val + " kamar"; // Format tooltip untuk menampilkan jumlah kamar
                         }
                     }
                 }
             };
 
             // Membuat dan menampilkan chart
-            let chart = new ApexCharts(document.querySelector("#branch-guest-chart"), options);
+            let chart = new ApexCharts(document.querySelector("#branch-occupancy-chart"), options);
             chart.render();
         })
         .catch(error => console.error('Error:', error)); // Menangani error jika terjadi

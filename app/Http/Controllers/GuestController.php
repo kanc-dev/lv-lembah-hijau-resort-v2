@@ -10,6 +10,7 @@ use App\Models\Event;
 use App\Models\GuestCheckin;
 use App\Models\Room;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class GuestController extends Controller
 {
@@ -18,6 +19,7 @@ class GuestController extends Controller
      */
     public function index()
     {
+
         $guests = Guest::with('branch.rooms', 'events', 'guestcheckins.room')->get();
         $data['guests'] = $guests;
         $data['page_title'] = 'Data Tamu';
@@ -30,8 +32,16 @@ class GuestController extends Controller
      */
     public function create()
     {
+        $user = Auth::user();
+        $branchId = $user->branch_id; // Asumsi field branch_id ada di tabel users
+
+        if ($branchId) {
+            $branches = Branch::where('id', $branchId)->get();
+        } else {
+            $branches = Branch::all();
+        }
         $data['rooms'] = Room::all();
-        $data['branches'] = Branch::all();
+        $data['branches'] = $branches;
         $data['events'] = Event::all();
         $data['page_title'] = 'Tambah Tamu';
         return view('pages.guest.create', compact('data'));
