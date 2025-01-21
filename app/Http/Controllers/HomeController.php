@@ -8,6 +8,7 @@ use App\Models\Event;
 use App\Models\Guest;
 use App\Models\GuestCheckin;
 use App\Models\Room;
+use App\Models\RoomOccupancyHistory;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -142,8 +143,9 @@ class HomeController extends Controller
         $data['bookings'] = Booking::all();
         $data['events'] = Event::all();
         $data['guests_of_branch'] = $this->_getGuestOfBranch();
+        $data['calendar_data_occupancy'] = $this->_getCalendarDataOccupancy();
 
-        // dd($data);
+        // dd($data['calendar_data_occupancy']);
         // dd($data['occupancy_of_branch']);
 
         $data['page_title'] = 'Dashboard';
@@ -841,5 +843,26 @@ class HomeController extends Controller
             'status' => 'success',
             'data' => $branchData
         ]);
+    }
+
+    private function _getCalendarDataOccupancy()
+    {
+        $occupancyHistories = RoomOccupancyHistory::with('branch')->get();
+
+
+        $formattedData = $occupancyHistories->map(function ($history) {
+            return [
+                'start' => Carbon::parse($history->tanggal)->format('Y-m-d'),
+                // 'branch_id' => $history->branch_id,
+                // 'total_rooms' => $history->total_rooms,
+                // 'total_capacity' => $history->total_capacity,
+                // 'occupied_capacity' => $history->occupied_capacity,
+                // 'available_capacity' => $history->available_capacity,
+                'title' => $history->branch->name . ' : ' . $history->occupancy_percentage . "%",
+                'color' => $history->branch->color
+            ];
+        });
+
+        return $formattedData;
     }
 }

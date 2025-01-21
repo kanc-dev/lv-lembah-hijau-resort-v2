@@ -343,6 +343,13 @@
                         </div> <!-- end col-->
                     </div>
 
+                    <div class="row">
+                        <div class="col-md-3"></div>
+                        <div class="col-md-9">
+                            <div id='calendar'></div>
+                        </div>
+                    </div>
+
                 </div>
             </div>
         @else
@@ -593,3 +600,21 @@
     </div>
     <!-- container-fluid -->
 @endsection
+
+@push('head-script')
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js'></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var calendarEl = document.getElementById('calendar');
+            var calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                themeSystem: 'bootstrap5',
+                events: {!! json_encode($data['calendar_data_occupancy']) !!}
+            });
+            calendar.render();
+        });
+    </script>
+@endpush
+
+@push('body-script')
+@endpush

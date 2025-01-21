@@ -17,6 +17,8 @@
     <!-- App favicon -->
     <link rel="shortcut icon" href="{{ asset('') }}image/favicon.png">
 
+    <link href='https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css' rel='stylesheet'>
+    <link href='https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css' rel='stylesheet'>
 
     <!-- jsvectormap css -->
     <link href="{{ asset('') }}assets/libs/jsvectormap/css/jsvectormap.min.css" rel="stylesheet" type="text/css" />
@@ -53,8 +55,10 @@
     <script src="{{ asset('') }}assets/libs/apexcharts/apexcharts.min.js"></script>
 
     {{-- @vite(['resources/sass/app.scss', 'resources/js/app.js']) --}}
+    <script src='fullcalendar/dist/index.global.js'></script>
 
     @stack('styles')
+    @stack('head-script')
 
 </head>
 
@@ -872,6 +876,7 @@
     <script src="{{ asset('') }}assets/js/app.js"></script>
 
     @stack('scripts')
+    @stack('body-script')
 </body>
 
 </html>

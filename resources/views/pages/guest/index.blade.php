@@ -100,23 +100,25 @@
                                                                         </thead>
                                                                         <tbody>
                                                                             @foreach ($data['rooms'] as $index => $room)
-                                                                                <tr>
-                                                                                    <td>{{ $index + 1 }}</td>
-                                                                                    <td>{{ $room->nama }}</td>
-                                                                                    <td>{{ $room->kapasitas }}</td>
-                                                                                    <td>{{ $room->terisi ?? 0 }}</td>
-                                                                                    <td>{{ $room->kapasitas - $room->terisi }}
-                                                                                    </td>
-                                                                                    <td>
-                                                                                        <button
-                                                                                            class="btn btn-sm btn-success select-room-btn"
-                                                                                            data-room-id="{{ $room->id }}"
-                                                                                            data-guest-id="{{ $guest->id }}"
-                                                                                            @if ($room->terisi >= $room->kapasitas) disabled @endif>
-                                                                                            {{ $room->terisi >= $room->kapasitas ? 'Penuh' : 'Pilih' }}
-                                                                                        </button>
-                                                                                    </td>
-                                                                                </tr>
+                                                                                @if ($guest->branch_id == $room->branch_id)
+                                                                                    <tr>
+                                                                                        <td>{{ $index + 1 }}</td>
+                                                                                        <td>{{ $room->nama }}</td>
+                                                                                        <td>{{ $room->kapasitas }}</td>
+                                                                                        <td>{{ $room->terisi ?? 0 }}</td>
+                                                                                        <td>{{ $room->kapasitas - $room->terisi }}
+                                                                                        </td>
+                                                                                        <td>
+                                                                                            <button
+                                                                                                class="btn btn-sm btn-success select-room-btn"
+                                                                                                data-room-id="{{ $room->id }}"
+                                                                                                data-guest-id="{{ $guest->id }}"
+                                                                                                @if ($room->terisi >= $room->kapasitas) disabled @endif>
+                                                                                                {{ $room->terisi >= $room->kapasitas ? 'Penuh' : 'Pilih' }}
+                                                                                            </button>
+                                                                                        </td>
+                                                                                    </tr>
+                                                                                @endif
                                                                             @endforeach
                                                                         </tbody>
                                                                     </table>

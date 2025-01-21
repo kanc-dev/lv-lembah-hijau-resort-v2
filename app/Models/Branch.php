@@ -46,4 +46,9 @@ class Branch extends Model
     {
         return $this->hasMany(Event::class);
     }
+
+    public function roomOccupancyHistories()
+    {
+        return $this->hasMany(RoomOccupancyHistory::class);
+    }
 }
