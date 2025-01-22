@@ -8,6 +8,7 @@ use App\Http\Requests\UpdateRoomRequest;
 use App\Models\Booking;
 use App\Models\Branch;
 use App\Models\Event;
+use App\Models\RoomReport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -32,9 +33,9 @@ class RoomController extends Controller
             $rooms = Room::with(['branch', 'guestCheckins.guest.events'])->where('branch_id', $branchId)->get();
         }
 
-
         $data['rooms'] = $rooms;
         $data['page_title'] = 'Data Kamar';
+        // dd($data);
 
         return view('pages.room.index', compact('data'));
     }
@@ -42,55 +43,60 @@ class RoomController extends Controller
     public function status()
     {
         $user = auth()->user();
+        $branchId = $user->branch_id;
 
-        // Jika user tidak memiliki branch_id (superadmin)
-        if (!$user->branch_id) {
-            $rooms = Room::with('branch')
-                ->withCount(['guests as total_terisi' => function ($query) {
-                    $query->whereDate('tanggal_checkin', '<=', now())
-                        ->whereDate('tanggal_checkout', '>=', now());
-                }])
-                ->get();
-            $events = Event::all();
-        } else {
-            // Jika user memiliki branch_id (PIC)
-            $rooms = Room::where('branch_id', $user->branch_id)
-                ->withCount(['guests as total_terisi' => function ($query) {
-                    // Menghitung tamu yang check-in pada hari ini dan belum checkout
-                    $query->whereDate('tanggal_checkin', '<=', now())
-                        ->whereDate('tanggal_checkout', '>=', now());
-                }])
-                ->with('branch')
-                ->get();
-            $events = Event::where('branch_id', $user->branch_id)->get();
-        }
+        // Query dengan filter berdasarkan branchId jika ada
+        $getRoomStatus = Room::with(['branch', 'event', 'guestCheckins.guest'])
+            ->when($branchId, function ($query, $branchId) {
+                return $query->where('branch_id', $branchId);
+            })
+            ->get()
+            ->map(function ($room) {
+                $activeCheckins = $room->guestCheckins->filter(function ($checkin) {
+                    return is_null($checkin->tanggal_checkout);
+                });
 
-        // Mengolah data kamar dan statusnya
-        $roomStatuses = $rooms->map(function ($room) {
-            $jumlahTerisi = $room->total_terisi; // Menggunakan total_terisi dari withCount
-            $sisaKamar = $room->kapasitas - $jumlahTerisi;
+                return [
+                    'id' => $room->id,
+                    'branch' => $room->branch->name ?? 'N/A',
+                    'nama' => $room->nama,
+                    'tipe' => $room->tipe,
+                    'status' => $room->status,
+                    'kapasitas' => $room->kapasitas,
+                    'terisi' => $activeCheckins->count(),
+                    'sisa_bed' => $room->kapasitas - $activeCheckins->count(),
+                    'event' => $room->event->nama_kelas ?? 'N/A',
+                    'tamu' => $activeCheckins->map(function ($checkin) {
+                        return [
+                            'nama' => $checkin->guest->nama,
+                            'checkin' => $checkin->tanggal_checkin,
+                            'checkout' => $checkin->tanggal_checkout,
+                        ];
+                    }),
+                ];
+            });
 
-            return [
-                'id' => $room->id,
-                'unit' => $room->branch->name ?? 'N/A',
-                'nama_kamar' => $room->nama,
-                'kapasitas' => $room->kapasitas,
-                'terisi' => $jumlahTerisi,
-                'sisa' => $sisaKamar,
-                'status' => $room->status,
-            ];
-        });
-
-        $data['rooms'] = $roomStatuses;
+        $data['rooms'] = $getRoomStatus;
         $data['page_title'] = 'Status Kamar';
 
         return view('pages.room.status', compact('data'));
     }
 
 
+
     public function report()
     {
-        $data = Room::all();
+        $user = auth()->user();
+        $branchId = $user->branch_id;
+
+        // Query dengan filter berdasarkan branchId jika ada
+        if ($branchId) {
+            $data['reports'] = RoomReport::where('branch_id', $branchId)->get();
+        } else {
+            $data['reports'] = RoomReport::all();
+        }
+
+        $data['page_title'] = 'Laporan Kamar';
         return view('pages.room.report', compact('data'));
     }
 

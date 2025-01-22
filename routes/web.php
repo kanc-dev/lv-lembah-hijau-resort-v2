@@ -68,6 +68,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/available-rooms', [RoomController::class, 'getAvailableRooms'])->name('room.available_rooms');
 
     Route::get('/status-room', [RoomController::class, 'status'])->name('status.room');
+    Route::get('/report-room', [RoomController::class, 'report'])->name('report.room');
 
 
     Route::get('/user', [UserController::class, 'index'])->name('user.index');

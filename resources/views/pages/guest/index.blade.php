@@ -94,8 +94,6 @@
                                                                             <th>No</th>
                                                                             <th>Nama Kamar</th>
                                                                             <th>Kapasitas</th>
-                                                                            <th>Terisi</th>
-                                                                            <th>Tersedia</th>
                                                                             <th>Aksi</th>
                                                                         </tr>
                                                                     </thead>
@@ -106,9 +104,6 @@
                                                                                     <td>{{ $index + 1 }}</td>
                                                                                     <td>{{ $room->nama }}</td>
                                                                                     <td>{{ $room->kapasitas }}</td>
-                                                                                    <td>{{ $room->terisi ?? 0 }}</td>
-                                                                                    <td>{{ $room->kapasitas - $room->terisi }}
-                                                                                    </td>
                                                                                     <td>
                                                                                         <button
                                                                                             class="btn btn-sm btn-success select-room-btn"

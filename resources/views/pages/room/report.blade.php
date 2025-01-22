@@ -25,7 +25,7 @@
             <div class="col-lg-12">
                 <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0 card-title">Status Kamar</h5>
+                        <h5 class="mb-0 card-title">Report Kamar</h5>
                     </div>
                     <div class="card-body">
                         @if (session('success'))
@@ -37,65 +37,27 @@
                             <thead>
                                 <tr>
                                     <th>ID</th>
+                                    <td>Tanggal Laporan</td>
                                     <th>Nama Kamar</th>
                                     <th>Unit</th>
-                                    <th>Tipe</th>
-                                    <th>Status</th>
                                     <th>Kapasitas</th>
                                     <th>Terisi</th>
                                     <th>Tersedia</th>
                                     <th>Event</th>
-                                    <th>Tamu</th>
-                                    <th>Check-In</th>
-                                    <th>Check-Out</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach ($data['rooms'] as $room)
+                                @foreach ($data['reports'] as $room)
                                     <tr>
                                         <td>{{ $room['id'] }}</td>
+                                        <td>{{ date('d, M Y', strtotime($room['report_date'])) }}</td>
                                         <td>{{ $room['nama'] }}</td>
                                         <td>{{ $room['branch'] }}</td>
-                                        <td>{{ $room['tipe'] }}</td>
-                                        <td>
-                                            <span
-                                                class="badge {{ $room['status'] == 'available' ? 'badge-soft-info' : 'badge-soft-secondary' }}">
-                                                {{ ucfirst($room['status']) }}
-                                            </span>
-                                        </td>
                                         <td>{{ $room['kapasitas'] }}</td>
 
                                         <td>{{ $room['terisi'] }}</td>
                                         <td>{{ $room['sisa_bed'] ?? 0 }}</td>
                                         <td>{{ $room['event'] ?? 'N/A' }}</td>
-                                        <td>
-                                            <div class="flex-wrap d-flex">
-                                                @foreach ($room['tamu'] as $tamu)
-                                                    <span
-                                                        class="badge badge-soft-info">{{ $tamu['nama'] ? $tamu['nama'] : 'N/A' }}</span>
-                                                @endforeach
-
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <div class="flex-wrap d-flex">
-
-                                                @foreach ($room['tamu'] as $tamu)
-                                                    <span
-                                                        class="badge badge-soft-info">{{ $tamu['checkin'] ? date('d, M Y', strtotime($tamu['checkin'])) : 'N/A' }}</span>
-                                                @endforeach
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <div class="flex-wrap d-flex">
-                                                @foreach ($room['tamu'] as $tamu)
-                                                    <span
-                                                        class="badge badge-soft-info">{{ $tamu['checkout'] ? date('d, M Y', strtotime($tamu['checkout'])) : 'N/A' }}</span>
-                                                @endforeach
-
-                                            </div>
-                                        </td>
-                                        {{-- <td>{!! $room['tamu'] !!}</td> --}}
                                     </tr>
                                 @endforeach
                             </tbody>
