@@ -10,7 +10,7 @@
 
                     <div class="page-title-right">
                         <ol class="m-0 breadcrumb">
-                            <li class="breadcrumb-item"><a href="{{ route('home.index') }}">Home</a></li>
+                            <li class="breadcrumb-item"><a href="{{ url('/') }}">Home</a></li>
                             @if (isset($data['page_title']))
                                 <li class="breadcrumb-item active">{{ $data['page_title'] }}</li>
                             @endif

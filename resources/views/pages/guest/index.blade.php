@@ -8,7 +8,7 @@
                     <h4 class="mb-sm-0">{{ $data['page_title'] }}</h4>
                     <div class="page-title-right">
                         <ol class="m-0 breadcrumb">
-                            <li class="breadcrumb-item"><a href="{{ route('home.index') }}">Home</a></li>
+                            <li class="breadcrumb-item"><a href="{{ url('/') }}">Home</a></li>
                             <li class="breadcrumb-item active">{{ $data['page_title'] }}</li>
                         </ol>
                     </div>

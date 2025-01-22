@@ -2,7 +2,7 @@
     <!-- LOGO -->
     <div class="relative navbar-brand-box" style="background:  url({{ asset('') }}image/background.png) no-repeat ; ">
         <!-- Dark Logo-->
-        <a href="{{ route('home.index') }}" class="logo logo-dark">
+        <a href="{{ url('/') }}" class="logo logo-dark">
             <span class="logo-sm">
                 <img src="{{ asset('') }}image/favicon.png" alt="" height="30">
             </span>
@@ -11,7 +11,7 @@
             </span>
         </a>
         <!-- Light Logo-->
-        <a href={{ route('home.index') }}" class="logo logo-light">
+        <a href={{ url('/') }}" class="logo logo-light">
             <span class="logo-sm">
                 <img src="{{ asset('') }}image/favicon.png" alt="" height="30">
             </span>
@@ -34,8 +34,8 @@
                 <li class="menu-title"><span data-key="t-menu">Menu</span></li>
 
                 <li class="nav-item">
-                    <a class="nav-link menu-link {{ request()->is('home*') ? 'active' : '' }}"
-                        href="{{ route('home.index') }}">
+                    <a class="nav-link menu-link {{ request()->is('dashboard*') ? 'active' : '' }}"
+                        href="{{ url('/') }}">
                         <i data-feather="home" class="icon-dual"></i> <span data-key="t-dashboards">Dashboard</span>
                     </a>
                 </li>

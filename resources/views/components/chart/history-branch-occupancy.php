@@ -1,8 +1,10 @@
-<div id="branch-occupancy-chart"></div>
+<div id="history-branch-occupancy" class="{{ $branchId ?? '' }}"></div>
 
 <script>
+    const branchId = 1 // Akan menjadi string kosong jika branchId tidak ada
+    console.log('Branch ID:', branchId);
     // Ambil data dari API untuk occupancy
-    fetch('/branch-occupancy-chart') // Gantilah URL API sesuai kebutuhan
+    fetch(`/api/occupancy/room-history`) // Gantilah URL API sesuai kebutuhan
         .then(response => response.json())
         .then(data => {
             // Opsi untuk chart
@@ -58,7 +60,7 @@
             };
 
             // Membuat dan menampilkan chart
-            let chart = new ApexCharts(document.querySelector("#branch-occupancy-chart"), options);
+            let chart = new ApexCharts(document.querySelector("#history-branch-occupancy"), options);
             chart.render();
         })
         .catch(error => console.error('Error:', error)); // Menangani error jika terjadi

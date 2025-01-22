@@ -11,14 +11,19 @@
                         <h4 class="mb-sm-0">Dashboard</h4>
                         @if (isset($data['is_admin']) && $data['is_admin'] == true)
                             <div class="gap-2 mt-3 d-flex align-items-center">
-                                <button type="button" class="btn btn-soft-secondary btn-sm">
+                                <a href="{{ url('/dashboard') }}"
+                                    class="btn {{ request()->is('dashboard') ? 'btn-secondary' : 'btn-soft-secondary' }} btn-sm">
                                     ALL
-                                </button>
-                                {{-- @foreach ($data['branchs'] as $branch)
-                                <button type="button" class="btn btn-soft-secondary btn-sm text-uppercase">
-                                    {{ $branch->name }}
-                                </button>
-                            @endforeach --}}
+                                </a>
+                                @php
+                                    $branchName = request()->segment(2);
+                                @endphp
+                                @foreach ($data['branch_list'] as $branch)
+                                    <a href="{{ url('/dashboard') . '/' . strtolower($branch->name) }}"
+                                        class="btn btn-soft-secondary btn-sm text-uppercase">
+                                        {{ $branch->name }}
+                                    </a>
+                                @endforeach
                             </div>
                         @endif
                     </div>
@@ -220,8 +225,6 @@
                                         <div class="card-body">
                                             <x-chart.branch-occupancy-pie />
 
-
-
                                             <div class="mt-3 table-responsive table-card">
                                                 <table
                                                     class="table mb-1 align-middle table-borderless table-sm table-centered table-nowrap">
@@ -286,7 +289,7 @@
 
                                 <div class="p-0 pb-2 card-body">
                                     <div>
-                                        <x-chart.branch-occupancy-chart />
+                                        <x-history-branch-occupancy :branchId="$branchId" />
                                     </div>
                                 </div><!-- end card body -->
                             </div><!-- end card -->
@@ -302,7 +305,8 @@
                                 </div><!-- end cardheader -->
                                 <div class="p-0 pb-2 card-body">
                                     <div>
-                                        <x-chart.event-timeline-chart />
+
+                                        <x-event-schedule :branchId="$branchId" />
                                     </div>
                                 </div><!-- end card body -->
                             </div><!-- end card -->
@@ -344,10 +348,37 @@
                     </div>
 
                     <div class="row">
-                        <div class="col-md-3"></div>
-                        <div class="col-md-9">
-                            <div id='calendar'></div>
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="border-0 card-header">
+                                    <h4 class="mb-0 card-title">Calender Occupancy</h4>
+                                </div><!-- end cardheader -->
+                                <div class="p-0 pb-2 card-body">
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <div class="card">
+                                                <div class="card-body">
+                                                    <div class="gap-2 d-flex flex-column">
+                                                        <button class="btn btn-secondary w-100 filter-branch active"
+                                                            data-branch-id="">Semua</button>
+                                                        @foreach ($data['branchs'] as $branch)
+                                                            <button class="btn btn-outline-secondary w-100 filter-branch"
+                                                                data-branch-id="{{ $branch->id }}">
+                                                                {{ $branch->name }}
+                                                            </button>
+                                                        @endforeach
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-9">
+                                            <x-chart.calendar-occupancy-data />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
+
                     </div>
 
                 </div>
@@ -534,7 +565,7 @@
 
                                 <div class="p-0 pb-2 card-body">
                                     <div>
-                                        <x-chart.branch-occupancy-chart />
+                                        <x-chart.history-branch-occupancy />
                                     </div>
                                 </div><!-- end card body -->
                             </div><!-- end card -->
@@ -550,7 +581,7 @@
                                 </div><!-- end cardheader -->
                                 <div class="p-0 pb-2 card-body">
                                     <div>
-                                        <x-chart.event-timeline-chart />
+                                        <x-event-schedule :branchId="$branchId" />
                                     </div>
                                 </div><!-- end card body -->
                             </div><!-- end card -->
@@ -602,18 +633,6 @@
 @endsection
 
 @push('head-script')
-    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js'></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            var calendarEl = document.getElementById('calendar');
-            var calendar = new FullCalendar.Calendar(calendarEl, {
-                initialView: 'dayGridMonth',
-                themeSystem: 'bootstrap5',
-                events: {!! json_encode($data['calendar_data_occupancy']) !!}
-            });
-            calendar.render();
-        });
-    </script>
 @endpush
 
 @push('body-script')

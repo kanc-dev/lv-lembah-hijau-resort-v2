@@ -32,12 +32,26 @@ class HomeController extends Controller
      *
      * @return \Illuminate\Contracts\Support\Renderable
      */
+
     public function index()
     {
         $today = Carbon::now()->startOfDay();
 
         $user = Auth::user();
-        $branchId = $user->branch_id;
+        $branchId = $user->branch_id ?? '';
+
+        if (!$branchId) {
+            $branchName = request()->segment(2);
+
+            $branchMapping = [
+                'bandung' => 1,
+                'yogyakarta' => 2,
+                'surabaya' => 3,
+                'padang' => 4,
+                'makassar' => 5,
+            ];
+            $branchId = $branchMapping[$branchName] ?? '';
+        }
 
 
         if ($branchId) {
@@ -45,6 +59,7 @@ class HomeController extends Controller
             $data['is_admin'] = false;
             $branches = Branch::where('id', $branchId)->get();
         } else {
+
             $data['is_branch'] = false;
             $data['is_admin'] = true;
             $branches = Branch::all();
@@ -143,13 +158,135 @@ class HomeController extends Controller
         $data['bookings'] = Booking::all();
         $data['events'] = Event::all();
         $data['guests_of_branch'] = $this->_getGuestOfBranch();
-        $data['calendar_data_occupancy'] = $this->_getCalendarDataOccupancy();
+        $data['calendar_data_occupancy'] = $this->getCalendarDataOccupancy();
+        $data['branch_list'] = Branch::all();
 
         // dd($data['calendar_data_occupancy']);
         // dd($data['occupancy_of_branch']);
 
         $data['page_title'] = 'Dashboard';
-        return view('pages.home.index', compact('data', 'branches',));
+        return view('pages.home.index', compact('data', 'branches', 'branchId'));
+    }
+
+    public function branch($branchName = null)
+    {
+        $today = Carbon::now()->startOfDay();
+
+        // Daftar branch_id untuk mapping nama ke ID
+        $branchMapping = [
+            'bandung' => 1,
+            'yogyakarta' => 2,
+            'surabaya' => 3,
+            'padang' => 4,
+            'makassar' => 5,
+        ];
+
+
+        // Cek apakah nama branch valid
+        $selectedBranchId = $branchName ? ($branchMapping[$branchName] ?? '') : '';
+        $branchId = $selectedBranchId ?? '';
+
+        if (!$selectedBranchId) {
+            abort(404, 'Branch not found');
+        }
+
+        // Logika untuk menentukan akses admin atau branch
+        $data['is_branch'] = $branchId ?? false;
+        $data['is_admin'] = !$data['is_branch'];
+
+
+        $branches = Branch::where('id', $selectedBranchId)->get();
+
+        $branchesWithOccupancy = $branches->map(function ($branch) {
+            $totalRooms = $branch->rooms->count();
+            $occupiedRooms = $branch->rooms->filter(function ($room) {
+                return $room->guestCheckins()->where('tanggal_checkout', '>=', now()->format('Y-m-d'))->exists();
+            })->count();
+
+            return [
+                'branch' => $branch,
+                'occupancy' => [
+                    'total' => $totalRooms,
+                    'occupied' => $occupiedRooms,
+                    'empty' => $totalRooms - $occupiedRooms
+                ]
+            ];
+        });
+
+        // Akumulasi data
+        $totalRooms = $branchesWithOccupancy->sum(function ($branchData) {
+            return $branchData['occupancy']['total'];
+        });
+
+        $occupiedRooms = $branchesWithOccupancy->sum(function ($branchData) {
+            return $branchData['occupancy']['occupied'];
+        });
+
+        $emptyRooms = $totalRooms - $occupiedRooms;
+
+        $totalGuests = $branchesWithOccupancy->sum(function ($branchData) {
+            return $branchData['branch']->rooms->sum(function ($room) {
+                return $room->guestCheckins()->count();
+            });
+        });
+
+        $bookings = Booking::all();
+        if ($data['is_branch']) {
+            $data['bookings'] = $bookings->where('origin_branch_id', $branchId);
+        } else {
+            $data['bookings'] = $bookings;
+        }
+
+        $events = Event::all();
+        if ($data['is_branch']) {
+            $data['events'] = $events->where('branch_id', $branchId);
+        } else {
+            $data['events'] = $events;
+        }
+
+        $guests = Guest::all();
+        if ($data['is_branch']) {
+            $data['guests'] = $guests->where('branch_id', $branchId);
+        } else {
+            $data['guests'] = $guests;
+        }
+
+        $rooms = Room::all();
+        if ($data['is_branch']) {
+            $data['rooms'] = $rooms->where('branch_id', $branchId);
+        } else {
+            $data['rooms'] = $rooms;
+        }
+
+
+        $data['occupancy_of_branch'] = $this->_getBranchesWithOccupancy();
+        $data['total_branch_active'] = $branchesWithOccupancy->count();
+
+        $data['total_booking_active'] =  $data['bookings']->count();
+        $data['total_event_active'] = $data['events']->count();
+        $data['total_guest_active'] = $this->_getRoomOccupancy($branchId)['total_guests'];
+        $data['total_room_active'] = $this->_getRoomOccupancy($branchId)['total_rooms'];
+        $data['total_room_capacity'] = $this->_getRoomOccupancy($branchId)['total_capacity'];
+        $data['total_room_occupied'] = $this->_getRoomOccupancy($branchId)['occupied_percentage'];
+        $data['total_room_empty'] = $this->_getRoomOccupancy($branchId)['empty_percentage'];
+
+        $data['event_booking'] = $this->_getUpcomingBookings($branchId);
+
+        // Data tambahan
+        $data['branch_occupancy'] = $branchesWithOccupancy;
+        $data['branches'] = $branches;
+        $data['branchs'] = $branches;
+        $data['branch_list'] = Branch::all();
+        $data['total_rooms'] = $totalRooms;
+        $data['occupied_rooms'] = $occupiedRooms;
+        $data['empty_rooms'] = $emptyRooms;
+        $data['total_guests'] = $totalGuests;
+
+        $data['page_title'] = 'Dashboard ' . ucfirst($branchName);
+
+
+        // Return view sesuai nama cabang
+        return view("pages.home.$branchName", compact('data', 'branches', 'branchId'));
     }
 
 
@@ -233,18 +370,17 @@ class HomeController extends Controller
         $today = Carbon::now()->startOfDay();
 
         $query = Booking::with(['event', 'originBranch', 'destinationBranch'])
-            ->where('tanggal_rencana_checkin', '>=', $today)
+            ->where('tanggal_rencana_checkout', '>=', $today)
             ->orderBy('tanggal_rencana_checkin', 'asc');
 
         if ($branchId) {
             $query->where('unit_origin_id', $branchId);
         }
 
-        $bookings = $query->limit(5)->get();
+        $bookings = $query->get();
+
         return $bookings;
     }
-
-
 
     private function _showOccupancy()
     {
@@ -316,54 +452,52 @@ class HomeController extends Controller
 
     public function __getBranchGuestData(Request $request)
     {
-        $data = Guest::whereNotNull('tanggal_checkin') // Mengambil tamu yang sudah checkin
-            ->where('tanggal_checkin', '<=', now()) // Hanya tamu yang checkin hingga hari ini
+        $data = Guest::whereNotNull('tanggal_checkin')
+            ->where('tanggal_checkin', '<=', now())
             ->where(function ($query) {
                 $query->whereNull('tanggal_checkout')
-                    ->orWhere('tanggal_checkout', '>=', now()); // Menambahkan tamu yang belum checkout
+                    ->orWhere('tanggal_checkout', '>=', now());
             })
             ->get()
-            ->groupBy('branch_id'); // Mengelompokkan berdasarkan branch_id
+            ->groupBy('branch_id');
 
-        // Inisialisasi array untuk menyimpan data chart
+
         $chartData = [
             'categories' => [],
             'series' => []
         ];
 
-        // Loop setiap branch_id untuk menyiapkan series di chart
         foreach ($data as $branchId => $guests) {
-            $branchName = $guests->first()->branch->name; // Nama branch berdasarkan data pertama di setiap kelompok
+            $branchName = $guests->first()->branch->name;
 
             $seriesData = [];
-            $dates = collect(); // Menyimpan tanggal yang terlibat
+            $dates = collect();
 
-            // Menyiapkan data untuk series berdasarkan tanggal check-in tamu
+
             foreach ($guests as $guest) {
                 $checkinDate = Carbon::parse($guest->tanggal_checkin);
                 $checkoutDate = $guest->tanggal_checkout ? Carbon::parse($guest->tanggal_checkout) : Carbon::now();
 
-                // Menambahkan tanggal ke dalam list
+
                 while ($checkinDate <= $checkoutDate) {
                     $dates->push($checkinDate->format('Y-m-d'));
                     $checkinDate->addDay();
                 }
             }
 
-            // Menghapus duplikat tanggal dan mengurutkan
+
             $dates = $dates->unique()->sort();
 
-            // Memasukkan tanggal ke kategori chart
+
             $chartData['categories'] = $dates->values()->toArray();
 
-            // Menghitung jumlah tamu untuk setiap tanggal dan memasukkannya ke dalam series
+
             foreach ($chartData['categories'] as $date) {
                 $count = 0;
                 foreach ($guests as $guest) {
                     $checkinDate = Carbon::parse($guest->tanggal_checkin);
                     $checkoutDate = $guest->tanggal_checkout ? Carbon::parse($guest->tanggal_checkout) : Carbon::now();
 
-                    // Menambah tamu jika tanggal berada dalam rentang check-in dan check-out
                     if ($checkinDate <= Carbon::parse($date) && $checkoutDate >= Carbon::parse($date)) {
                         $count++;
                     }
@@ -371,7 +505,6 @@ class HomeController extends Controller
                 $seriesData[] = $count;
             }
 
-            // Menambahkan series untuk branch ke chartData
             $chartData['series'][] = [
                 'name' => $branchName,
                 'data' => $seriesData
@@ -383,7 +516,6 @@ class HomeController extends Controller
 
     public function getBranchGuestData(Request $request)
     {
-        // Ambil data branch
         $branches = Branch::pluck('name'); // Semua branch
         $guestCheckins = GuestCheckin::with('guest.branch')
             ->whereNotNull('tanggal_checkin')
@@ -441,15 +573,9 @@ class HomeController extends Controller
         return response()->json($chartData);
     }
 
-
-
-
     public function getRoomOccupancy(Request $request)
     {
-        $user = Auth::user();
-        $branchId = $user->branch_id;
-
-        // Jika user memiliki branch_id, ambil data untuk branch tersebut saja
+        $branchId = $request->input('branch_id');
         if ($branchId) {
             $branches = Branch::where('id', $branchId)->get();
             $guestCheckins = GuestCheckin::with('room.branch')
@@ -459,30 +585,24 @@ class HomeController extends Controller
                 })
                 ->get();
         } else {
-            // Jika tidak ada branch_id pada user, ambil semua branch
             $branches = Branch::all();
             $guestCheckins = GuestCheckin::with('room.branch')
                 ->whereNotNull('tanggal_checkin')
                 ->get();
         }
 
-        // Debugging: Check if data is being retrieved
         Log::info('Guest Checkins:', $guestCheckins->toArray());
 
-        // Ensure that there are guest check-ins
         if ($guestCheckins->isEmpty()) {
             return response()->json(['message' => 'No guest check-ins found']);
         }
 
-        // Determine the start and end dates for the chart
         $startDate = $guestCheckins->min('tanggal_checkin');
         $endDate = max(now()->format('Y-m-d'), $guestCheckins->max('tanggal_checkout'));
 
-        // Debugging: Log the start and end dates
         Log::info('Start Date: ' . $startDate);
         Log::info('End Date: ' . $endDate);
 
-        // Generate an array of dates for the x-axis of the chart
         $categories = [];
         $currentDate = \Carbon\Carbon::parse($startDate);
 
@@ -491,43 +611,34 @@ class HomeController extends Controller
             $currentDate->addDay();
         }
 
-        // Debugging: Log the categories (dates for the chart)
         Log::info('Categories: ', $categories);
 
-        // Initialize an array to store the occupancy data for each branch
         $chartData = [
             'categories' => $categories,
             'series' => []
         ];
 
-        // Iterate over each branch
         foreach ($branches as $branch) {
-            $branchSeriesData = array_fill(0, count($categories), 0); // Initialize the occupancy count for each date
+            $branchSeriesData = array_fill(0, count($categories), 0);
 
-            // Get the rooms belonging to this branch
             $branchRooms = Room::where('branch_id', $branch->id)->get();
 
-            // Debugging: Check rooms for each branch
             Log::info('Branch ' . $branch->name . ' Rooms:', $branchRooms->toArray());
 
-            // Iterate through each guest check-in
             foreach ($guestCheckins as $guestCheckin) {
-                // Only consider the check-ins that belong to this branch
                 if ($guestCheckin->room->branch_id !== $branch->id) {
                     continue;
                 }
 
                 $checkinDate = \Carbon\Carbon::parse($guestCheckin->tanggal_checkin);
                 $checkoutDate = $guestCheckin->tanggal_checkout
-                    ? \Carbon\Carbon::parse($guestCheckin->tanggal_checkout) // If checkout exists, use it
-                    : now(); // If no checkout, assume the room is occupied until today
+                    ? \Carbon\Carbon::parse($guestCheckin->tanggal_checkout)
+                    : now();
 
-                // Loop through each date from check-in to check-out
                 while ($checkinDate->lte($checkoutDate)) {
                     $dateIndex = array_search($checkinDate->format('Y-m-d'), $categories);
 
                     if ($dateIndex !== false) {
-                        // Increment the occupancy for this date and branch
                         $branchSeriesData[$dateIndex]++;
                     }
 
@@ -535,23 +646,33 @@ class HomeController extends Controller
                 }
             }
 
-            // Add the occupancy data for this branch to the chart data
             $chartData['series'][] = [
                 'name' => $branch->name,
                 'data' => $branchSeriesData
             ];
         }
 
-        // Return the chart data as a JSON response
         return response()->json($chartData);
     }
-
 
     public function getRoomOccupancyAccumulated(Request $request)
     {
         // Ambil pengguna yang sedang login
         $user = Auth::user();
         $branchId = $user->branch_id;
+
+        if (!$branchId) {
+            $branchName = request()->segment(2);
+
+            $branchMapping = [
+                'bandung' => 1,
+                'yogyakarta' => 2,
+                'surabaya' => 3,
+                'padang' => 4,
+                'makassar' => 5,
+            ];
+            $branchId = $branchMapping[$branchName];
+        }
 
         // Ambil semua guest check-ins dan filter berdasarkan branch_id jika ada
         $guestCheckins = GuestCheckin::with('room.branch')
@@ -618,7 +739,6 @@ class HomeController extends Controller
         return response()->json($chartData);
     }
 
-
     public function getRoomOccupancyPieChart(Request $request)
     {
         // Ambil semua branch dengan jumlah kamar terisi hari ini
@@ -666,6 +786,19 @@ class HomeController extends Controller
     {
         $user = Auth::user();
         $branchId = $user->branch_id;
+
+        if (!$branchId) {
+            $branchName = request()->segment(2);
+
+            $branchMapping = [
+                'bandung' => 1,
+                'yogyakarta' => 2,
+                'surabaya' => 3,
+                'padang' => 4,
+                'makassar' => 5,
+            ];
+            $branchId = $branchMapping[$branchName];
+        }
 
         // Jika user memiliki branch_id, ambil data untuk branch tersebut saja
         if ($branchId) {
@@ -768,6 +901,29 @@ class HomeController extends Controller
         $user = Auth::user();
         $branchId = $user->branch_id;
 
+        // Ambil nama cabang dari URL
+        $branchName = request()->segment(2);
+
+        // Mapping nama cabang ke branch_id
+        $branchMapping = [
+            'bandung' => 1,
+            'yogyakarta' => 2,
+            'surabaya' => 3,
+            'padang' => 4,
+            'makassar' => 5,
+        ];
+
+        if (!$branchId && $branchName) {
+            if (isset($branchMapping[$branchName])) {
+                $branchId = $branchMapping[$branchName];
+            } else {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Cabang tidak valid.',
+                ], 404);
+            }
+        }
+
         if (!$branchId) {
             // Admin: ambil data untuk semua cabang
             $branches = Branch::all();
@@ -811,6 +967,19 @@ class HomeController extends Controller
         $branchId = $user->branch_id;
 
         if (!$branchId) {
+            $branchName = request()->segment(2);
+
+            $branchMapping = [
+                'bandung' => 1,
+                'yogyakarta' => 2,
+                'surabaya' => 3,
+                'padang' => 4,
+                'makassar' => 5,
+            ];
+            $branchId = $branchMapping[$branchName];
+        }
+
+        if (!$branchId) {
             // Admin: ambil data untuk semua cabang
             $branches = Branch::all();
         } else {
@@ -845,24 +1014,44 @@ class HomeController extends Controller
         ]);
     }
 
-    private function _getCalendarDataOccupancy()
+    public function getCalendarDataOccupancy(Request $request = null)
     {
-        $occupancyHistories = RoomOccupancyHistory::with('branch')->get();
+
+        // $request = $request ?? new Request();
+        $branchId = $request->branch_id ?? '';
+        $query = RoomOccupancyHistory::with('branch');
 
 
-        $formattedData = $occupancyHistories->map(function ($history) {
+        if ($branchId) {
+            $query->where('branch_id', $branchId);
+        }
+
+        $occupancyHistories = $query->get();
+
+        $branchColors = [
+            1 => '#FFCCCB',
+            2 => '#CCFFCC',
+            3 => '#CCE5FF',
+            4 => '#FFFFCC',
+            5 => '#FFCCE5',
+        ];
+
+        // Format data
+        $formattedData = $occupancyHistories->map(function ($history) use ($branchColors) {
+            $branchId = $history->branch->id;
+            $color = $branchColors[$branchId] ?? '#CCCCCC';
+
+
             return [
+                'id' => $history->id,
                 'start' => Carbon::parse($history->tanggal)->format('Y-m-d'),
-                // 'branch_id' => $history->branch_id,
-                // 'total_rooms' => $history->total_rooms,
-                // 'total_capacity' => $history->total_capacity,
-                // 'occupied_capacity' => $history->occupied_capacity,
-                // 'available_capacity' => $history->available_capacity,
-                'title' => $history->branch->name . ' : ' . $history->occupancy_percentage . "%",
-                'color' => $history->branch->color
+                'title' => $history->branch->name . " - " . $history->occupancy_percentage . "%",
+                'color' => $color,
+                'textColor' => '#333333',
+                'description' => "Total Rooms: {$history->total_rooms}, Capacity: {$history->total_capacity}, Occupied: {$history->occupied_capacity}, Available: {$history->available_capacity}",
             ];
         });
 
-        return $formattedData;
+        return response()->json($formattedData);
     }
 }

@@ -9,7 +9,7 @@
                     <h4 class="mb-sm-0">Edit Tamu</h4>
                     <div class="page-title-right">
                         <ol class="m-0 breadcrumb">
-                            <li class="breadcrumb-item"><a href="{{ route('home.index') }}">Home</a></li>
+                            <li class="breadcrumb-item"><a href="{{ url('/') }}">Home</a></li>
                             <li class="breadcrumb-item"><a href="{{ route('guest.index') }}">Tamu</a></li>
                             <li class="breadcrumb-item active">Edit Tamu</li>
                         </ol>

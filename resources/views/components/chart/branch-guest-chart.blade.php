@@ -6,16 +6,15 @@
     fetch('/branch-guests?filter=daily')
         .then(response => response.json())
         .then(data => {
-            // Opsi untuk chart
             let options = {
-                series: data.series, // Menggunakan data series yang diterima dari API
+                series: data.series,
                 chart: {
-                    type: 'bar', // Jenis chart yang digunakan
+                    type: 'bar',
                     height: 350
                 },
                 plotOptions: {
                     bar: {
-                        horizontal: false, // Chart vertikal
+                        horizontal: false,
                         columnWidth: '55%',
                         borderRadius: 5,
                         borderRadiusApplication: 'end'
@@ -30,15 +29,15 @@
                     colors: ['transparent']
                 },
                 xaxis: {
-                    categories: data.categories, // Data kategori (tanggal) yang diterima dari API
+                    categories: data.categories,
                 },
                 yaxis: {
                     title: {
                         text: 'Jumlah Tamu'
                     },
-                    min: 0, // Menentukan nilai minimum pada sumbu Y
+                    min: 0,
                     max: Math.max(...data.series.flatMap(s => s.data)) +
-                        2, // Memberikan sedikit ruang di atas nilai tertinggi
+                        2,
                     tickAmount: 6,
                 },
                 fill: {
@@ -47,15 +46,14 @@
                 tooltip: {
                     y: {
                         formatter: function(val) {
-                            return val + " tamu"; // Format tooltip untuk menampilkan jumlah tamu
+                            return val + " tamu";
                         }
                     }
                 }
             };
 
-            // Membuat dan menampilkan chart
             let chart = new ApexCharts(document.querySelector("#branch-guest-chart"), options);
             chart.render();
         })
-        .catch(error => console.error('Error:', error)); // Menangani error jika terjadi
+        .catch(error => console.error('Error:', error));
 </script>

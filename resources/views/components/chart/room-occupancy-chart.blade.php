@@ -1,21 +1,41 @@
 <div id="room-occupancy-chart"></div>
 
-
 <script>
-    // Ambil data dari API untuk occupancy
-    fetch('/room-occupancy-data') // Periksa endpoint API
+    const pathSegments = window.location.pathname.split('/');
+
+    const branchName = pathSegments[2];
+
+    let apiUrl = '/room-occupancy-data';
+
+    if (branchName) {
+        const branchMapping = {
+            'bandung': 1,
+            'yogyakarta': 2,
+            'surabaya': 3,
+            'padang': 4,
+            'makassar': 5,
+        };
+
+        const branchId = branchMapping[branchName];
+
+        if (branchId) {
+            apiUrl = `/room-occupancy-data?branch_id=${branchId}`;
+        }
+    }
+
+    console.log('Fetching data from:', apiUrl);
+
+    fetch(apiUrl)
         .then(response => response.json())
         .then(data => {
-            console.log('API Response:', data); // Debugging respons API
+            console.log('API Response:', data);
 
-            // Pastikan data memiliki struktur yang diharapkan
             if (!data || !data.data) {
                 throw new Error('Invalid API response format.');
             }
 
             const occupancyData = data.data;
 
-            // Persiapkan data untuk chart
             const chartOptions = {
                 chart: {
                     type: 'pie',
@@ -23,24 +43,16 @@
                 },
                 labels: ['Kamar Terisi', 'Kamar Kosong'],
                 series: [occupancyData.occupied, occupancyData.empty],
-                // colors: ['#4caf50', '#f44336'], // Warna hijau untuk terisi, merah untuk kosong
                 tooltip: {
                     y: {
                         formatter: function(val) {
-                            return val.toFixed(2) + '%'; // Format dengan 2 desimal
-                        }
-                    }
-                },
-                tooltip: {
-                    y: {
-                        formatter: function(val) {
-                            return val + "%";
+                            return val.toFixed(2) + '%';
                         }
                     }
                 },
                 legend: {
-                    position: 'bottom', // Memindahkan legend ke bawah chart
-                    horizontalAlign: 'center', // Menempatkan legend di tengah
+                    position: 'bottom',
+                    horizontalAlign: 'center',
                     floating: false,
                     fontSize: '14px',
                     itemMargin: {
@@ -61,9 +73,8 @@
                 }]
             };
 
-            // Membuat dan menampilkan chart
             let chart = new ApexCharts(document.querySelector("#room-occupancy-chart"), chartOptions);
             chart.render();
         })
-        .catch(error => console.error('Error fetching data:', error)); // Menangani error jika terjadi
+        .catch(error => console.error('Error fetching data:', error));
 </script>
