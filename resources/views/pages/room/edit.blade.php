@@ -27,7 +27,7 @@
             <div class="col-lg-12">
                 <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0 card-title">Tambah Kamar</h5>
+                        <h5 class="mb-0 card-title">Edit Kamar</h5>
                         <a href="{{ route('room.index') }}" class="d-flex align-items-center btn btn-secondary">
                             <i class="ri-arrow-left-line"></i>
                             <span>Kembali</span>
@@ -65,11 +65,6 @@
 
                                 <!-- Kolom Kanan -->
                                 <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label for="kapasitas" class="form-label">Kapasitas *</label>
-                                        <input type="number" class="form-control" id="kapasitas" name="kapasitas"
-                                            value="{{ old('kapasitas', $data['room']->kapasitas) }}" required>
-                                    </div>
 
                                     <!-- Branch Selection -->
                                     <div class="mb-3">
@@ -88,6 +83,19 @@
                                                 <option value="{{ Auth::user()->branch_id }}" selected>
                                                     {{ Auth::user()->branch->name }}</option>
                                             @endif
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="event_id" class="form-label">Event</label>
+                                        <select class="form-select" id="event_id" name="event_id">
+                                            <!-- Tampilkan semua branch jika branch_id 0 -->
+                                            <option value="">Pilih Event</option>
+                                            @foreach ($data['events'] as $event)
+                                                <option value="{{ $event->id }}"
+                                                    {{ old('event_id', $data['room']->event_id) === $event->id ? 'selected' : '' }}>
+                                                    {{ $event->nama_kelas }}
+                                                </option>
+                                            @endforeach
                                         </select>
                                     </div>
 

@@ -16,104 +16,101 @@ use Illuminate\Support\Facades\Log;
 
 class OccupancyController extends Controller
 {
-    public function getCalendarDataOccupancy(Request $request)
+
+    public function getRoomEmptyOccupied(Request $request)
     {
-        $branchId = $request->branch_id ?? '';
-        $query = RoomOccupancyHistory::with('branch');
+        // Ambil branch_id dari request
+        $branchId = $request->input('branch_id');
 
-
-
+        // Jika branch_id diberikan, filter cabang berdasarkan branch_id
         if ($branchId) {
-            $query->where('branch_id', $branchId);
-        }
-
-        $occupancyHistories = $query->get();
-
-        $branchColors = [
-            1 => '#FFCCCB',
-            2 => '#CCFFCC',
-            3 => '#CCE5FF',
-            4 => '#FFFFCC',
-            5 => '#FFCCE5',
-        ];
-
-        // Format data
-        $formattedData = $occupancyHistories->map(function ($history) use ($branchColors, $branchId) {
-            $branch_id = $history->branch->id;
-            $color = $branchColors[$branch_id] ?? '#CCCCCC';
-
-            $title = '';
-            if (!$branchId) {
-                $title = substr($history->branch->name, 0, 1) . " - " . $history->occupancy_percentage . "%";
-            } else {
-                $title = $history->occupancy_percentage . "%";
-            }
-
-
-
-            return [
-                'id' => $history->id,
-                'start' => Carbon::parse($history->tanggal)->format('Y-m-d'),
-                'title' => $title,
-                'color' => $color,
-                'textColor' => '#333333',
-                'description' => "Total Rooms: {$history->total_rooms}, Capacity: {$history->total_capacity}, Occupied: {$history->occupied_capacity}, Available: {$history->available_capacity}",
-            ];
-        });
-
-        return new OccupancyResource(true, 'Success', $formattedData);
-    }
-
-    public function getRoomOccupancyData(Request $request)
-    {
-        $branchId = $request->query('branch_id');  // Mendapatkan branch_id dari query parameter
-
-        // Jika tidak ada branch_id di URL, cek apakah user login dan memiliki branch_id
-        if (!$branchId) {
-            $user = Auth::user();
-            $branchId = $user->branch_id ?? null;  // Menggunakan branch_id dari user yang login jika ada
-        }
-
-        // Jika branch_id ditemukan, ambil data untuk cabang tersebut
-        if ($branchId) {
-            $branches = Branch::where('id', $branchId)->get();
+            $branches = Branch::with('rooms')->where('id', $branchId)->get();
         } else {
-            // Jika branch_id tidak ada, admin dapat melihat semua cabang
-            $branches = Branch::all();
+            // Jika branch_id tidak diberikan, ambil semua cabang
+            $branches = Branch::with('rooms')->get();
         }
 
-        $branchData = [];
+        // Inisialisasi total kapasitas dan kapasitas terisi
+        $totalCapacity = 0;
+        $occupiedCapacity = 0;
 
-        // Iterasi setiap cabang untuk menghitung okupansi
         foreach ($branches as $branch) {
-            $totalRooms = $branch->rooms->count();  // Total kamar di cabang ini
-            $occupiedRooms = $branch->rooms->filter(function ($room) {
-                return $room->guestCheckins()->where('tanggal_checkout', '>=', now()->format('Y-m-d'))->exists();
-            })->count();  // Kamar yang terisi (guest check-ins yang belum checkout)
-
-            $emptyRooms = $totalRooms - $occupiedRooms;
-
-            // Hitung persentase kamar yang terisi dan kosong
-            $occupiedPercentage = $totalRooms > 0 ? ($occupiedRooms / $totalRooms) * 100 : 0;
-            $emptyPercentage = 100 - $occupiedPercentage;
-
-            // Masukkan data ke array untuk setiap cabang
-            $branchData[] = [
-                'id' => $branch->id,
-                'branch' => $branch->name,
-                'occupied' => $occupiedPercentage,
-                'empty' => $emptyPercentage
-            ];
+            foreach ($branch->rooms as $room) {
+                $totalCapacity += $room->kapasitas; // Akumulasi kapasitas total
+                $occupiedCapacity += $room->terisi ?? 0; // Akumulasi kapasitas terisi
+            }
         }
 
-        // Mengembalikan response dalam format JSON
+        // Hitung kapasitas kosong
+        $emptyCapacity = $totalCapacity - $occupiedCapacity;
+
+        // Hitung persentase kapasitas terisi dan kosong
+        $occupiedPercentage = $totalCapacity > 0 ? ($occupiedCapacity / $totalCapacity) * 100 : 0;
+        $emptyPercentage = 100 - $occupiedPercentage;
+
+        // Susun data hasil kalkulasi
+        $data = [
+            'occupied' => $occupiedPercentage,
+            'empty' => $emptyPercentage
+        ];
+        // $data = [
+        //     'total_capacity' => $totalCapacity,
+        //     'occupied_capacity' => $occupiedCapacity,
+        //     'empty_capacity' => $emptyCapacity,
+        //     'occupied_percentage' => round($occupiedPercentage, 2),
+        //     'empty_percentage' => round($emptyPercentage, 2),
+        // ];
+
         return response()->json([
             'status' => 'success',
-            'data' => $branchData
+            'data' => $data
         ]);
     }
 
-    public function getRoomOccupancy(Request $request)
+
+
+    public function _getRoomEmptyOccupied(Request $request)
+    {
+        $branchId = $request->input('branch_id');
+
+        if (!$branchId) {
+            // Admin: ambil data untuk semua cabang
+            $branches = Branch::all();
+        } else {
+            // Pengguna memiliki cabang tertentu
+            $branches = Branch::where('id', $branchId)->get();
+        }
+
+        // Akumulasi total kamar dan kamar terisi
+        $totalRooms = 0;
+        $occupiedRooms = 0;
+
+        foreach ($branches as $branch) {
+            $totalRooms += $branch->rooms->count();
+            $occupiedRooms += $branch->rooms->filter(function ($room) {
+                return $room->guestCheckins()->where('tanggal_checkout', '>=', now()->format('Y-m-d'))->exists();
+            })->count();
+        }
+
+        // Hitung kamar kosong
+        $emptyRooms = $totalRooms - $occupiedRooms;
+
+        // Hitung persentase terisi dan kosong
+        $occupiedPercentage = $totalRooms > 0 ? ($occupiedRooms / $totalRooms) * 100 : 0;
+        $emptyPercentage = 100 - $occupiedPercentage;
+
+        $data = [
+            'occupied' => $occupiedPercentage,
+            'empty' => $emptyPercentage
+        ];
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $data
+        ]);
+    }
+
+    public function getRoomHistory(Request $request)
     {
         $branchId = $request->input('branch_id');
         if ($branchId) {
@@ -195,7 +192,7 @@ class OccupancyController extends Controller
         return response()->json($chartData);
     }
 
-    public function getEventTimelineData(Request $request)
+    public function getEventSchedule(Request $request)
     {
         $branchId = $request->input('branch_id');
 
@@ -252,5 +249,53 @@ class OccupancyController extends Controller
         return response()->json([
             'series' => $result->values()
         ]);
+    }
+
+    public function getCalendarData(Request $request)
+    {
+        $branchId = $request->branch_id ?? '';
+        $query = RoomOccupancyHistory::with('branch');
+
+
+
+        if ($branchId) {
+            $query->where('branch_id', $branchId);
+        }
+
+        $occupancyHistories = $query->get();
+
+        $branchColors = [
+            1 => '#FFCCCB',
+            2 => '#CCFFCC',
+            3 => '#CCE5FF',
+            4 => '#FFFFCC',
+            5 => '#FFCCE5',
+        ];
+
+        // Format data
+        $formattedData = $occupancyHistories->map(function ($history) use ($branchColors, $branchId) {
+            $branch_id = $history->branch->id;
+            $color = $branchColors[$branch_id] ?? '#CCCCCC';
+
+            $title = '';
+            if (!$branchId) {
+                $title = substr($history->branch->name, 0, 1) . " - " . $history->occupancy_percentage . "%";
+            } else {
+                $title = $history->occupancy_percentage . "%";
+            }
+
+
+
+            return [
+                'id' => $history->id,
+                'start' => Carbon::parse($history->tanggal)->format('Y-m-d'),
+                'title' => $title,
+                'color' => $color,
+                'textColor' => '#333333',
+                'description' => "Total Rooms: {$history->total_rooms}, Capacity: {$history->total_capacity}, Occupied: {$history->occupied_capacity}, Available: {$history->available_capacity}",
+            ];
+        });
+
+        return new OccupancyResource(true, 'Success', $formattedData);
     }
 }

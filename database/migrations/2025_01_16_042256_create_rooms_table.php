@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('rooms', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('branch_id');
+            $table->unsignedBigInteger('event_id')->nullable();
             $table->string('nama');
             $table->string('tipe');
             $table->string('harga');

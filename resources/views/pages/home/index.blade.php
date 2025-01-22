@@ -258,7 +258,8 @@
                                             <h4 class="mb-0 card-title flex-grow-1">Kamar Terisi / Kosong</h4>
                                         </div>
                                         <div class="card-body">
-                                            <x-chart.room-occupancy-chart />
+                                            {{-- <x-chart.room-occupancy-chart /> --}}
+                                            <x-room-empty-occupied :branchId="$branchId" />
                                         </div><!-- end card body -->
                                     </div><!-- end card -->
                                 </div> <!-- end col-->
@@ -544,7 +545,7 @@
                                             <h4 class="mb-0 card-title flex-grow-1">Kamar Terisi / Kosong</h4>
                                         </div>
                                         <div class="card-body">
-                                            <x-chart.room-occupancy-chart />
+                                            <x-room-empty-occupied :branchId="$branchId" />
                                         </div><!-- end card body -->
                                     </div><!-- end card -->
                                 </div> <!-- end col-->
@@ -565,7 +566,7 @@
 
                                 <div class="p-0 pb-2 card-body">
                                     <div>
-                                        <x-chart.history-branch-occupancy />
+                                        <x-history-branch-occupancy :branchId="$branchId" />
                                     </div>
                                 </div><!-- end card body -->
                             </div><!-- end card -->

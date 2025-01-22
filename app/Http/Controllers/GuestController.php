@@ -206,6 +206,7 @@ class GuestController extends Controller
             }
 
             // Simpan perubahan pada kamar
+            $room->event_id = $guest->event_id;
             $room->save();
 
             // Simpan kamar yang dipilih ke guest_checkins

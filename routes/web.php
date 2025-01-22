@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Route;
 
 Auth::routes();
 
+Route::get('/registrasi', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
 
 Route::middleware('auth')->group(function () {
     Route::get('/', function () {
@@ -29,6 +30,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/branch-occupancy-pie', [HomeController::class, 'getRoomOccupancyPieChart'])->name('branch-occupancy-pie');
     Route::get('/event-timeline', [HomeController::class, 'getEventTimelineData'])->name('event-timeline');
     Route::get('/room-occupancy-data', [HomeController::class, 'getOccupancyChartData'])->name('room-occupancy-data');
+
     Route::get('/branch-room-occupancy-data', [HomeController::class, 'getBranchOccupancyChartData'])->name('branch-room-occupancy-data');
     Route::get('/calendar-occupancy-data', [HomeController::class, 'getCalendarDataOccupancy'])->name('calendar-occupancy-data');
 

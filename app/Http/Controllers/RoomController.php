@@ -7,6 +7,7 @@ use App\Http\Requests\StoreRoomRequest;
 use App\Http\Requests\UpdateRoomRequest;
 use App\Models\Booking;
 use App\Models\Branch;
+use App\Models\Event;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -46,11 +47,11 @@ class RoomController extends Controller
         if (!$user->branch_id) {
             $rooms = Room::with('branch')
                 ->withCount(['guests as total_terisi' => function ($query) {
-                    // Menghitung tamu yang check-in pada hari ini dan belum checkout
                     $query->whereDate('tanggal_checkin', '<=', now())
                         ->whereDate('tanggal_checkout', '>=', now());
                 }])
                 ->get();
+            $events = Event::all();
         } else {
             // Jika user memiliki branch_id (PIC)
             $rooms = Room::where('branch_id', $user->branch_id)
@@ -61,6 +62,7 @@ class RoomController extends Controller
                 }])
                 ->with('branch')
                 ->get();
+            $events = Event::where('branch_id', $user->branch_id)->get();
         }
 
         // Mengolah data kamar dan statusnya
@@ -102,11 +104,14 @@ class RoomController extends Controller
 
         if ($branchId) {
             $branches = Branch::where('id', $branchId)->get();
+            $events = Event::where('branch_id', $branchId)->get();
         } else {
             $branches = Branch::all();
+            $events = Event::all();
         }
 
         $data['branches'] = $branches;
+        $data['events'] = $events;
         $data['page_title'] = 'Tambah Kamar';
         return view('pages.room.create', compact('data'));
     }
@@ -119,19 +124,18 @@ class RoomController extends Controller
         $validated = $request->validate([
             'nama_kamar' => 'required|string|max:255',
             'tipe' => 'required|string|max:255',
-            'harga' => 'required|numeric',
             'kapasitas' => 'required|numeric',
-            'branch_id' => 'required|exists:branches,id', // Validasi bahwa branch yang dipilih valid
-            'room_status' => 'required|in:available,unavailable', // Validasi status kamar
+            'branch_id' => 'required|numeric',
+            'room_status' => 'required|in:available,unavailable',
         ]);
 
         // Menyimpan kamar
         Room::create([
             'nama' => $validated['nama_kamar'],
             'tipe' => $validated['tipe'],
-            'harga' => $validated['harga'],
             'kapasitas' => $validated['kapasitas'],
             'branch_id' => $validated['branch_id'],
+            'event_id' => $request->input('event_id'),
             'status' => $validated['room_status'],
         ]);
 
@@ -151,11 +155,22 @@ class RoomController extends Controller
      */
     public function edit($id)
     {
-        $room = Room::findOrFail($id);
-        $branches = Branch::all();
+
+        $user = Auth::user();
+        $branchId = $user->branch_id;
+        if ($branchId) {
+            $branches = Branch::where('id', $branchId)->get();
+            $events = Event::where('branch_id', $branchId)->get();
+        } else {
+            $branches = Branch::all();
+            $events = Event::all();
+        }
+
+        $room = Room::with('branch', 'event')->findOrFail($id);
 
         $data['room'] = $room;
         $data['branches'] = $branches;
+        $data['events'] = $events;
         $data['page_title'] = 'Tambah Kamar';
         return view('pages.room.edit', compact('data'));
     }
@@ -168,19 +183,20 @@ class RoomController extends Controller
         $validated = $request->validate([
             'nama_kamar' => 'required|string|max:255',
             'tipe' => 'required|string|max:255',
-            'harga' => 'required|numeric',
             'kapasitas' => 'required|numeric',
-            'branch_id' => 'required|exists:branches,id',
+            'branch_id' => 'required|numeric',
             'room_status' => 'required|in:available,unavailable',
         ]);
+
+        // dd($validated);
 
         $room = Room::findOrFail($id);
         $room->update([
             'nama' => $validated['nama_kamar'],
             'tipe' => $validated['tipe'],
-            'harga' => $validated['harga'],
             'kapasitas' => $validated['kapasitas'],
             'branch_id' => $validated['branch_id'],
+            'event_id' => $request->input('event_id'),
             'status' => $validated['room_status'],
         ]);
 

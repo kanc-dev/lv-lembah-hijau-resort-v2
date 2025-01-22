@@ -12,6 +12,7 @@ Route::get('/user', function (Request $request) {
 
 Route::post('login', [AuthController::class, 'login']);
 
-Route::get('/occupancy/calendar-data', [OccupancyController::class, 'getCalendarDataOccupancy']);
-Route::get('/occupancy/room-history', [OccupancyController::class, 'getRoomOccupancy']);
-Route::get('/occupancy/event-schedule', [OccupancyController::class, 'getEventTimelineData']);
+Route::get('/occupancy/calendar-data', [OccupancyController::class, 'getCalendarData']);
+Route::get('/occupancy/room-history', [OccupancyController::class, 'getRoomHistory']);
+Route::get('/occupancy/event-schedule', [OccupancyController::class, 'getEventSchedule']);
+Route::get('/occupancy/room-empty-occupied', [OccupancyController::class, 'getRoomEmptyOccupied']);

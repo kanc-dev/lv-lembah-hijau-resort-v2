@@ -26,4 +26,9 @@ class Event extends Model
     {
         return $this->belongsTo(Branch::class);
     }
+
+    public function rooms()
+    {
+        return $this->hasMany(Room::class);
+    }
 }

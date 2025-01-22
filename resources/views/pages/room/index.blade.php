@@ -80,16 +80,20 @@
                                         <td>{{ $room['terisi'] ?? 0 }}</td>
                                         {{-- <td>{{ $room['kapasitas'] - $room['terisi'] }}</td> --}}
                                         <td>
-                                            @php
-                                                $events = $room->guestCheckins->flatMap(function ($checkin) {
-                                                    return $checkin->guest->events ?? [];
-                                                });
-                                            @endphp
+                                            @if (!$room['event_id'])
+                                                @php
+                                                    $events = $room->guestCheckins->flatMap(function ($checkin) {
+                                                        return $checkin->guest->events ?? [];
+                                                    });
+                                                @endphp
 
-                                            @if ($events->isNotEmpty())
-                                                <span>{{ $events[0]->nama_kelas }}</span><br>
+                                                @if ($events->isNotEmpty())
+                                                    <span>{{ $events[0]->nama_kelas }}</span><br>
+                                                @else
+                                                    <span>-</span>
+                                                @endif
                                             @else
-                                                <span>-</span>
+                                                <span>{{ $room->event->nama_kelas }}</span>
                                             @endif
                                         </td>
                                         <td>

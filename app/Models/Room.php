@@ -17,6 +17,11 @@ class Room extends Model
         return $this->belongsTo(Branch::class);
     }
 
+    public function event()
+    {
+        return $this->belongsTo(Event::class);
+    }
+
     public function guests()
     {
         return $this->hasMany(Guest::class, 'room_id');

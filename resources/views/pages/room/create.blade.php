@@ -122,6 +122,28 @@
                                     </div>
 
                                     <div class="mb-3">
+                                        <label for="event_id" class="form-label">Event<span
+                                                class="text-danger"></span></label>
+                                        <select class="form-select @error('event_id') is-invalid @enderror" id="event_id"
+                                            name="event_id">
+                                            <option value="">Pilih Event</option>
+                                            @foreach ($data['events'] as $event)
+                                                <option value="{{ $event->id }}"
+                                                    {{ old('event_id') == $event->id ? 'event_id' : '' }}>
+                                                    {{ $event->nama_kelas }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                        <div class="invalid-feedback">
+                                            @error('event_id')
+                                                {{ $message }}
+                                            @else
+                                                Harap pilih unit atau branch.
+                                            @enderror
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
                                         <label for="room_status" class="form-label">Status Kamar <span
                                                 class="text-danger">*</span></label>
                                         <select class="form-select @error('room_status') is-invalid @enderror"

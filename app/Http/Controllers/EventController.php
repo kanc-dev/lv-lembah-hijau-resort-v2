@@ -23,7 +23,14 @@ class EventController extends Controller
     public function index()
     {
 
-        $events = Event::with('branch')->get();
+        $user = Auth::user();
+        $branchId = $user->branch_id;
+
+        if ($branchId) {
+            $events = Event::with('branch')->where('branch_id', $branchId)->get();
+        } else {
+            $events = Event::with('branch')->get();
+        }
         $data['events'] = $events;
         $data['page_title'] = 'Data Event';
         return view('pages.event.index', compact('data'));
