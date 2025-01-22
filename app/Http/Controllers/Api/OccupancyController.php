@@ -12,6 +12,7 @@ use App\Models\RoomOccupancyHistory;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class OccupancyController extends Controller
@@ -22,49 +23,51 @@ class OccupancyController extends Controller
         // Ambil branch_id dari request
         $branchId = $request->input('branch_id');
 
-        // Jika branch_id diberikan, filter cabang berdasarkan branch_id
-        if ($branchId) {
-            $branches = Branch::with('rooms')->where('id', $branchId)->get();
-        } else {
-            // Jika branch_id tidak diberikan, ambil semua cabang
-            $branches = Branch::with('rooms')->get();
-        }
-
-        // Inisialisasi total kapasitas dan kapasitas terisi
-        $totalCapacity = 0;
-        $occupiedCapacity = 0;
-
-        foreach ($branches as $branch) {
-            foreach ($branch->rooms as $room) {
-                $totalCapacity += $room->kapasitas; // Akumulasi kapasitas total
-                $occupiedCapacity += $room->terisi ?? 0; // Akumulasi kapasitas terisi
-            }
-        }
-
-        // Hitung kapasitas kosong
-        $emptyCapacity = $totalCapacity - $occupiedCapacity;
-
-        // Hitung persentase kapasitas terisi dan kosong
-        $occupiedPercentage = $totalCapacity > 0 ? ($occupiedCapacity / $totalCapacity) * 100 : 0;
-        $emptyPercentage = 100 - $occupiedPercentage;
+        // Dapatkan occupancy data menggunakan metode _getRoomOccupancy
+        $occupancyData = $this->_getRoomOccupancy($branchId);
 
         // Susun data hasil kalkulasi
         $data = [
-            'occupied' => $occupiedPercentage,
-            'empty' => $emptyPercentage
+            'occupied' => round($occupancyData['occupied_percentage'], 2),
+            'empty' => round($occupancyData['empty_percentage'], 2),
         ];
-        // $data = [
-        //     'total_capacity' => $totalCapacity,
-        //     'occupied_capacity' => $occupiedCapacity,
-        //     'empty_capacity' => $emptyCapacity,
-        //     'occupied_percentage' => round($occupiedPercentage, 2),
-        //     'empty_percentage' => round($emptyPercentage, 2),
-        // ];
 
         return response()->json([
             'status' => 'success',
             'data' => $data
         ]);
+    }
+
+    private function _getRoomOccupancy($branchId = null)
+    {
+        $query = DB::table('rooms')
+            ->leftJoin('guest_checkins', 'rooms.id', '=', 'guest_checkins.room_id')
+            ->selectRaw(
+                'COUNT(DISTINCT rooms.id) as total_rooms,
+             SUM(rooms.kapasitas) as total_capacity,
+             COUNT(guest_checkins.id) as total_guests'
+            );
+
+        if ($branchId) {
+            $query->where('rooms.branch_id', $branchId);
+        }
+
+        $data = $query->first();
+
+        $totalRooms = $data->total_rooms ?? 0;
+        $totalCapacity = $data->total_capacity ?? 0;
+        $totalGuests = $data->total_guests ?? 0;
+
+        $occupiedPercentage = $totalCapacity > 0 ? ($totalGuests / $totalCapacity) * 100 : 0;
+        $emptyPercentage = 100 - $occupiedPercentage;
+
+        return $data = [
+            'total_rooms' => $totalRooms,
+            'total_capacity' => $totalCapacity,
+            'total_guests' => $totalGuests,
+            'occupied_percentage' => $occupiedPercentage,
+            'empty_percentage' => $emptyPercentage
+        ];
     }
 
 

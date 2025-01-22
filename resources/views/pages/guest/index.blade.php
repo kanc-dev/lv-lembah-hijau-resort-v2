@@ -66,69 +66,70 @@
                                         <td>{{ $guest->no_hp }}</td>
                                         <td>{{ $guest->email }}</td>
                                         <td>
-                                            @if ($guest->guestcheckins->isNotEmpty())
-                                                {{ $guest->guestcheckins->first() ? $guest->guestcheckins->first()->room->nama : 'N/A' }}
-                                            @else
-                                                <button class="btn btn-warning btn-sm" data-bs-toggle="modal"
-                                                    data-bs-target="#plotRoomModal{{ $guest->id }}">
-                                                    Plot Kamar
-                                                </button>
+                                            {{-- @if ($guest->guestcheckins->isNotEmpty())
+                                            @else --}}
+                                            {{ $guest->guestcheckins->first() ? $guest->guestcheckins->first()->room->nama : 'N/A' }}
+                                            -
+                                            <button class="btn btn-warning btn-sm" data-bs-toggle="modal"
+                                                data-bs-target="#plotRoomModal{{ $guest->id }}">
+                                                Plot Kamar
+                                            </button>
 
-                                                <div class="modal fade" id="plotRoomModal{{ $guest->id }}"
-                                                    tabindex="-1" aria-labelledby="plotRoomModalLabel" aria-hidden="true">
-                                                    <div class="modal-dialog modal-lg">
-                                                        <div class="modal-content">
-                                                            <div class="modal-header">
-                                                                <h5 class="modal-title" id="plotRoomModalLabel">Pilih Kamar
-                                                                    untuk Tamu: {{ $guest->nama }}</h5>
-                                                                <button type="button" class="btn-close"
-                                                                    data-bs-dismiss="modal" aria-label="Close"></button>
+                                            <div class="modal fade" id="plotRoomModal{{ $guest->id }}" tabindex="-1"
+                                                aria-labelledby="plotRoomModalLabel" aria-hidden="true">
+                                                <div class="modal-dialog modal-lg">
+                                                    <div class="modal-content">
+                                                        <div class="modal-header">
+                                                            <h5 class="modal-title" id="plotRoomModalLabel">Pilih Kamar
+                                                                untuk Tamu: {{ $guest->nama }}</h5>
+                                                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                                aria-label="Close"></button>
+                                                        </div>
+                                                        <div class="modal-body">
+                                                            <div class="table-responsive">
+                                                                <table id="roomsTable"
+                                                                    class="table text-center align-middle table-sm table-striped table-hover table-bordered">
+                                                                    <thead class="table-light">
+                                                                        <tr>
+                                                                            <th>No</th>
+                                                                            <th>Nama Kamar</th>
+                                                                            <th>Kapasitas</th>
+                                                                            <th>Terisi</th>
+                                                                            <th>Tersedia</th>
+                                                                            <th>Aksi</th>
+                                                                        </tr>
+                                                                    </thead>
+                                                                    <tbody>
+                                                                        @foreach ($data['rooms'] as $index => $room)
+                                                                            @if ($guest->branch_id == $room->branch_id)
+                                                                                <tr>
+                                                                                    <td>{{ $index + 1 }}</td>
+                                                                                    <td>{{ $room->nama }}</td>
+                                                                                    <td>{{ $room->kapasitas }}</td>
+                                                                                    <td>{{ $room->terisi ?? 0 }}</td>
+                                                                                    <td>{{ $room->kapasitas - $room->terisi }}
+                                                                                    </td>
+                                                                                    <td>
+                                                                                        <button
+                                                                                            class="btn btn-sm btn-success select-room-btn"
+                                                                                            data-room-id="{{ $room->id }}"
+                                                                                            data-guest-id="{{ $guest->id }}"
+                                                                                            @if ($room->terisi >= $room->kapasitas) disabled @endif>
+                                                                                            {{ $room->terisi >= $room->kapasitas ? 'Penuh' : 'Pilih' }}
+                                                                                        </button>
+                                                                                    </td>
+                                                                                </tr>
+                                                                            @endif
+                                                                        @endforeach
+                                                                    </tbody>
+                                                                </table>
                                                             </div>
-                                                            <div class="modal-body">
-                                                                <div class="table-responsive">
-                                                                    <table id="roomsTable"
-                                                                        class="table text-center align-middle table-sm table-striped table-hover table-bordered">
-                                                                        <thead class="table-light">
-                                                                            <tr>
-                                                                                <th>No</th>
-                                                                                <th>Nama Kamar</th>
-                                                                                <th>Kapasitas</th>
-                                                                                <th>Terisi</th>
-                                                                                <th>Tersedia</th>
-                                                                                <th>Aksi</th>
-                                                                            </tr>
-                                                                        </thead>
-                                                                        <tbody>
-                                                                            @foreach ($data['rooms'] as $index => $room)
-                                                                                @if ($guest->branch_id == $room->branch_id)
-                                                                                    <tr>
-                                                                                        <td>{{ $index + 1 }}</td>
-                                                                                        <td>{{ $room->nama }}</td>
-                                                                                        <td>{{ $room->kapasitas }}</td>
-                                                                                        <td>{{ $room->terisi ?? 0 }}</td>
-                                                                                        <td>{{ $room->kapasitas - $room->terisi }}
-                                                                                        </td>
-                                                                                        <td>
-                                                                                            <button
-                                                                                                class="btn btn-sm btn-success select-room-btn"
-                                                                                                data-room-id="{{ $room->id }}"
-                                                                                                data-guest-id="{{ $guest->id }}"
-                                                                                                @if ($room->terisi >= $room->kapasitas) disabled @endif>
-                                                                                                {{ $room->terisi >= $room->kapasitas ? 'Penuh' : 'Pilih' }}
-                                                                                            </button>
-                                                                                        </td>
-                                                                                    </tr>
-                                                                                @endif
-                                                                            @endforeach
-                                                                        </tbody>
-                                                                    </table>
-                                                                </div>
 
-                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
-                                            @endif
+                                            </div>
+                                            {{-- @endif --}}
                                         </td>
 
                                         <td>{{ date('d, M Y', strtotime($guest->tanggal_rencana_checkin)) }}</td>
