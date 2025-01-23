@@ -66,11 +66,6 @@
                                             @enderror
                                         </div>
                                     </div>
-
-
-
-
-
                                     <div class="mb-3">
                                         <label for="no_hp" class="form-label">No. HP <span
                                                 class="text-danger">*</span></label>
@@ -84,7 +79,6 @@
                                             @enderror
                                         </div>
                                     </div>
-
                                     <div class="mb-3">
                                         <label for="email" class="form-label">Email <span
                                                 class="text-danger">*</span></label>
@@ -124,7 +118,6 @@
                                             @enderror
                                         </div>
                                     </div>
-
                                 </div>
 
                                 <!-- Kolom 2 -->
@@ -144,8 +137,6 @@
                                             @enderror
                                         </div>
                                     </div>
-
-
                                     <div class="mb-3">
                                         <label for="event_id" class="form-label">Event <span
                                                 class="text-danger">*</span></label>
@@ -179,9 +170,6 @@
                                             @enderror
                                         </div>
                                     </div>
-
-
-
                                     <div class="mb-3">
                                         <label for="tanggal_rencana_checkin" class="form-label">Tanggal Rencana Check-in
                                             <span class="text-danger">*</span></label>
@@ -197,7 +185,6 @@
                                             @enderror
                                         </div>
                                     </div>
-
                                     <div class="mb-3">
                                         <label for="tanggal_rencana_checkout" class="form-label">Tanggal Rencana Check-out
                                             <span class="text-danger">*</span></label>
@@ -213,7 +200,6 @@
                                             @enderror
                                         </div>
                                     </div>
-
                                     <div class="mb-3">
                                         <label for="branch_id" class="form-label">Branch / Unit <span
                                                 class="text-danger">*</span></label>
@@ -235,32 +221,8 @@
                                             @enderror
                                         </div>
                                     </div>
-
-                                    {{-- <div class="mb-3">
-                                        <label for="room_id" class="form-label">Kamar</label>
-                                        <select class="form-select @error('room_id') is-invalid @enderror" id="room_id"
-                                            name="room_id" required>
-                                            <option value="">Pilih Kamar</option>
-                                            @foreach ($data['rooms'] as $room)
-                                                <option value="{{ $room->id }}"
-                                                    {{ old('room_id') == $room->id ? 'selected' : '' }}>
-                                                    {{ $room->nama }} <small>({{ $room->kapasitas }})</small>
-                                                </option>
-                                            @endforeach
-                                        </select>
-                                        <div class="invalid-feedback">
-                                            @error('room_id')
-                                                {{ $message }}
-                                            @else
-                                                Harap pilih kamar.
-                                            @enderror
-                                        </div>
-                                    </div> --}}
-
-
                                 </div>
                             </div>
-
                             <div class="text-start">
                                 <button type="submit" class="btn btn-success">Tambah Tamu</button>
                             </div>

@@ -5,6 +5,7 @@ use App\Http\Controllers\BranchController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\GuestController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\RegistrasiController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\RoomController;
 use App\Http\Controllers\UserController;
@@ -14,7 +15,9 @@ use Illuminate\Support\Facades\Route;
 
 Auth::routes();
 
-Route::get('/registrasi', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
+Route::get('/registrasi', [RegistrasiController::class, 'index'])->name('registrasi');
+Route::post('/registrasi', [RegistrasiController::class, 'store'])->name('registrasi.store');
+Route::get('/registrasi-success/{token}', [RegistrasiController::class, 'success'])->name('registrasi.success');
 
 Route::middleware('auth')->group(function () {
     Route::get('/', function () {
