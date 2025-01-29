@@ -37,6 +37,10 @@
                                 <strong>{{ session('success') }}</strong>
                             </div>
                         @endif
+                        <div class="mb-3">
+                            <button id="bulkPlotEvent" class="btn btn-warning btn-sm" data-bs-toggle="modal"
+                                data-bs-target="#bulkPlotEventModal" disabled>Bulk Plot Event</button>
+                        </div>
                         <table id="scroll-horizontal" class="table align-middle nowrap" style="width:100%">
                             <thead>
                                 <tr>
@@ -52,8 +56,8 @@
                                     <th>Type</th>
                                     {{-- <th>Price</th> --}}
                                     <th>Status</th>
-                                    <th>Kapasitas</th>
-                                    <th>Terisi</th>
+                                    {{-- <th>Kapasitas</th>
+                                    <th>Terisi</th> --}}
                                     {{-- <th>Tersedia</th> --}}
                                     <th>Event</th>
                                     <th>Action</th>
@@ -64,11 +68,11 @@
                                     <tr>
                                         <th scope="row">
                                             <div class="form-check">
-                                                <input class="form-check-input fs-15" type="checkbox" name="checkAll"
-                                                    value="option{{ $room['id'] }}">
+                                                <input class="form-check-input fs-15 room-checkbox" type="checkbox"
+                                                    name="checkAll" value="{{ $room['id'] }}">
                                             </div>
                                         </th>
-                                        <td>{{ $room['id'] }}</td>
+                                        <td>{{ $loop->iteration }}</td>
                                         <td>{{ $room->branch->name ?? 'N/A' }}</td>
                                         <td><a href="#!">{{ $room['nama'] }}</a></td>
                                         <td>{{ $room['tipe'] }}</td>
@@ -76,8 +80,8 @@
                                         <td><span
                                                 class="badge {{ $room['status'] == 'available' ? 'badge-soft-info' : 'badge-soft-secondary' }}">{{ ucfirst($room['status']) }}</span>
                                         </td>
-                                        <td>{{ $room['kapasitas'] }}</td>
-                                        <td>{{ $room['terisi'] ?? 0 }}</td>
+                                        {{-- <td>{{ $room['kapasitas'] }}</td>
+                                        <td>{{ $room['terisi'] ?? 0 }}</td> --}}
                                         {{-- <td>{{ $room['kapasitas'] - $room['terisi'] }}</td> --}}
                                         <td>
                                             @if (!$room['event_id'])
@@ -135,6 +139,80 @@
             </div>
         </div>
     </div>
-@endsection
 
-s
+    <div class="modal fade" id="bulkPlotEventModal" tabindex="-1" aria-labelledby="bulkPlotEventModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-sm">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="bulkPlotEventModalLabel">Pilih Event</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form action="{{ route('room.bulk-plot-event') }}" method="POST">
+                        @csrf
+                        <select class="form-select mb-3 @error('event_id') is-invalid @enderror" id="event_id"
+                            name="event_id">
+                            <option value="">--Pilih Event--</option>
+                            @foreach ($data['events'] as $event)
+                                <option value="{{ $event->id }}" {{ old('event_id') == $event->id ? 'event_id' : '' }}>
+                                    {{ $event->nama_kelas }}
+                                </option>
+                            @endforeach
+                        </select>
+                        <input type="text" name="room_ids" id="room_ids">
+                        <button type="submit" class="btn btn-success ">Submit</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+@endsection
+@push('scripts')
+    <script>
+        function getSelectedRooms() {
+            const selected = [];
+            document.querySelectorAll('.room-checkbox:checked').forEach((checkbox) => {
+                selected.push(checkbox.value);
+            });
+            return selected;
+        }
+
+        function toggleBulkButtons(isEnabled) {
+            const bulkPlotEvent = document.getElementById('bulkPlotEvent');
+
+            bulkPlotEvent.disabled = !isEnabled;
+        }
+
+        function checkSelectedRooms() {
+            const selectedRooms = getSelectedRooms();
+            const isSelected = selectedRooms.length > 0;
+            toggleBulkButtons(isSelected);
+            console.log(selectedRooms);
+
+        }
+
+
+        document.getElementById('checkAll').addEventListener('change', (event) => {
+            const isChecked = event.target.checked;
+
+            document.querySelectorAll('.room-checkbox').forEach((checkbox) => {
+                checkbox.checked = isChecked;
+            });
+
+            checkSelectedRooms();
+        });
+
+        document.querySelectorAll('.room-checkbox').forEach((checkbox) => {
+            checkbox.addEventListener('change', () => {
+                checkSelectedRooms();
+            });
+        });
+
+        document.getElementById('bulkPlotEvent').addEventListener('click', () => {
+            const selectedRooms = getSelectedRooms();
+            const roomIdsInput = document.getElementById('room_ids'); // Get the room_ids input
+            roomIdsInput.value = selectedRooms.join(',');
+        });
+    </script>
+@endpush

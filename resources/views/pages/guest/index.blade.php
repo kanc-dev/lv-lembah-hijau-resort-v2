@@ -32,44 +32,61 @@
                             </div>
                         @endif
 
-                        <table id="example" class="table align-middle dt-responsive nowrap table-striped"
-                            style="width:100%">
+                        <div class="mb-3">
+                            <button id="bulkPlotRoom" class="btn btn-warning btn-sm" data-bs-toggle="modal"
+                                data-bs-target="#bulkPlotRoomModal" disabled>Bulk Plot Kamar</button>
+                            <button id="bulkCheckin" class="btn btn-success btn-sm" disabled>Bulk Check-in</button>
+                            <button id="bulkCheckout" class="btn btn-danger btn-sm" disabled>Bulk Check-out</button>
+                        </div>
+
+                        <table id="scroll-horizontal" class="table align-middle nowrap table-striped" style="width:100%">
                             <thead>
                                 <tr>
+                                    <th scope="col" style="width: 10px;">
+                                        <div class="form-check">
+                                            <input class="form-check-input fs-15" type="checkbox" id="checkAll"
+                                                value="option">
+                                        </div>
+                                    </th>
                                     <th>ID</th>
-                                    <th>Name</th>
-                                    <th>Gender</th>
-                                    <th>Branch</th>
-                                    <th>Batch</th>
-                                    <th>Vehicle</th>
-                                    <th>Plate No</th>
-                                    <th>Phone</th>
-                                    <th>Email</th>
+                                    <th>Nama</th>
                                     <th>Kamar</th>
+                                    <th>Check-in</th>
+                                    <th>Check-out</th>
+                                    <th>Unit</th>
+                                    <th>Event</th>
+                                    <th>Batch</th>
+                                    <th>Telepon</th>
+                                    <th>Email</th>
+                                    <th>Jenis Kelamin</th>
+                                    <th>Kendaraan</th>
+                                    <th>Plat No</th>
                                     <th>Rencana Check-in</th>
                                     <th>Rencana Check-out</th>
-                                    <th>Actual Check-in</th>
-                                    <th>Actual Check-out</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach ($data['guests'] as $guest)
                                     <tr>
+                                        <th scope="row">
+                                            <div class="form-check">
+                                                <input class="form-check-input fs-15 guest-checkbox" type="checkbox"
+                                                    name="checkAll" value="{{ $guest->id }}">
+                                            </div>
+                                        </th>
                                         <td>{{ $loop->iteration }}</td>
                                         <td>{{ $guest->nama }}</td>
-                                        <td>{{ $guest->jenis_kelamin }}</td>
-                                        <td>{{ $guest->branch->name }}</td>
-                                        <td>{{ $guest->batch }}</td>
-                                        <td>{{ $guest->kendaraan }}</td>
-                                        <td>{{ $guest->no_polisi }}</td>
-                                        <td>{{ $guest->no_hp }}</td>
-                                        <td>{{ $guest->email }}</td>
                                         <td>
                                             {{-- @if ($guest->guestcheckins->isNotEmpty())
                                             @else --}}
-                                            {{ $guest->guestcheckins->first() ? $guest->guestcheckins->first()->room->nama : 'N/A' }}
-                                            -
+                                            @if ($guest->guestcheckins->first())
+                                                <span
+                                                    class="badge bg-warning">{{ $guest->guestcheckins->first()->room->nama }}</span>
+                                            @else
+                                                <span class="badge bg-warning">N/A</span>
+                                            @endif
+                                            {{-- -
                                             <button class="btn btn-warning btn-sm" data-bs-toggle="modal"
                                                 data-bs-target="#plotRoomModal{{ $guest->id }}">
                                                 Plot Kamar
@@ -123,16 +140,15 @@
                                                         </div>
                                                     </div>
                                                 </div>
-                                            </div>
+                                            </div> --}}
                                             {{-- @endif --}}
                                         </td>
-
-                                        <td>{{ date('d, M Y', strtotime($guest->tanggal_rencana_checkin)) }}</td>
-                                        <td>{{ date('d, M Y', strtotime($guest->tanggal_rencana_checkout)) }}</td>
                                         <td id="checkin_date_display{{ $guest->id }}">
                                             @if ($guest->guestcheckins->isNotEmpty() && $guest->guestcheckins->first()->room_id)
                                                 @if ($guest->guestcheckins->isNotEmpty() && $guest->guestcheckins->first()->tanggal_checkin)
-                                                    {{ date('d, M Y', strtotime($guest->guestcheckins->first()->tanggal_checkin)) }}
+                                                    <span class="badge bg-success">
+                                                        {{ date('d, M Y', strtotime($guest->guestcheckins->first()->tanggal_checkin)) }}
+                                                    </span>
                                                 @else
                                                     <form action="{{ route('guest.checkin', $guest->id) }}" method="POST"
                                                         class="d-inline">
@@ -147,7 +163,10 @@
                                         <td id="checkout_date_display{{ $guest->id }}">
                                             @if ($guest->guestcheckins->isNotEmpty() && $guest->guestcheckins->first()->tanggal_checkin)
                                                 @if ($guest->guestcheckins->isNotEmpty() && $guest->guestcheckins->first()->tanggal_checkout)
-                                                    {{ date('d, M Y', strtotime($guest->guestcheckins->first()->tanggal_checkout)) }}
+                                                    <span class="badge bg-danger">
+                                                        {{ date('d, M Y', strtotime($guest->guestcheckins->first()->tanggal_checkout)) }}
+
+                                                    </span>
                                                 @else
                                                     <form action="{{ route('guest.checkout', $guest->id) }}" method="POST"
                                                         class="d-inline">
@@ -160,6 +179,25 @@
                                                 @endif
                                             @endif
                                         </td>
+                                        <td>{{ $guest->branch->name }}</td>
+                                        <td>
+                                            @if ($guest->events)
+                                                @foreach ($guest->events as $event)
+                                                    {{ $event->nama_kelas }}
+                                                @endforeach
+                                            @else
+                                                'N/A'
+                                            @endif
+                                        </td>
+                                        <td>{{ $guest->batch }}</td>
+                                        <td>{{ $guest->no_hp }}</td>
+                                        <td>{{ $guest->email }}</td>
+                                        <td>{{ $guest->jenis_kelamin }}</td>
+                                        <td>{{ $guest->kendaraan }}</td>
+                                        <td>{{ $guest->no_polisi }}</td>
+                                        <td>{{ date('d, M Y', strtotime($guest->tanggal_rencana_checkin)) }}</td>
+                                        <td>{{ date('d, M Y', strtotime($guest->tanggal_rencana_checkout)) }}</td>
+
                                         <td>
                                             <a href="{{ route('guest.edit', $guest) }}"
                                                 class="btn btn-warning btn-sm">Edit</a>
@@ -183,25 +221,52 @@
             </div>
         </div>
     </div>
+
+    <div class="modal fade" id="bulkPlotRoomModal" tabindex="-1" aria-labelledby="bulkPlotRoomModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="bulkPlotRoomModalLabel">Pilih Kamar untuk Tamu yang Dipilih</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="table-responsive">
+                        <table id="roomsTable"
+                            class="table text-center align-middle table-sm table-striped table-hover table-bordered">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>No</th>
+                                    <th>Unit</th>
+                                    <th>Nama Kamar</th>
+                                    <th>Kapasitas</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($data['rooms'] as $index => $room)
+                                    <tr>
+                                        <td>{{ $index + 1 }}</td>
+                                        <td>{{ $room->branch->name }}</td>
+                                        <td>{{ $room->nama }}</td>
+                                        <td>{{ $room->kapasitas }}</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-success plot-room-btn"
+                                                data-room-id="{{ $room->id }}"
+                                                data-room-capacity="{{ $room->kapasitas }}">
+                                                Plot
+                                            </button>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 @endsection
-
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const checkinButtons = document.querySelectorAll('.set-checkin-btn');
-        console.log(checkinButtons); // Pastikan tombol ada di DOM
-
-        checkinButtons.forEach(button => {
-            button.addEventListener('click', function() {
-                console.log('Tombol Check-in diklik!');
-                const guestId = this.getAttribute('data-guest-id');
-                const today = new Date().toISOString().split('T')[0];
-                console.log(today);
-            });
-        });
-
-    })
-</script>
-
 @push('scripts')
     <script>
         $(document).ready(function() {
@@ -213,6 +278,7 @@
                 info: true, // Menampilkan informasi jumlah data
                 autoWidth: false // Menonaktifkan pengaturan lebar otomatis
             });
+
         });
     </script>
     <script>
@@ -220,8 +286,6 @@
             const checkinButtons = document.querySelectorAll('.set-checkin-btn');
             const checkoutButtons = document.querySelectorAll('.set-checkout-btn');
             const selectRoomButtons = document.querySelectorAll('.select-room-btn');
-
-
 
             selectRoomButtons.forEach(button => {
                 button.addEventListener('click', function() {
@@ -255,79 +319,179 @@
                         });
                 });
             });
+        });
 
-            // checkinButtons.forEach(button => {
-            //     button.addEventListener('click', function() {
-            //         console.log('Tombol Check-in diklik!');
-            //         const guestId = this.getAttribute('data-guest-id');
-            //         const today = new Date().toISOString().split('T')[0];
-            //         console.log(today);
-            //     });
-            // });
-            // checkinButtons.forEach(button => {
-            //     button.addEventListener('click', function() {
-            //         console.log('Tombol Check-in diklik!');
-            //         const guestId = this.getAttribute('data-guest-id');
-            //         const today = new Date().toISOString().split('T')[
-            //             0];
-            //         console.log(today);
 
-            //         fetch(`/guest/checkin/${guestId}`, {
-            //                 method: 'POST',
-            //                 headers: {
-            //                     'Content-Type': 'application/json',
-            //                     'X-CSRF-TOKEN': '{{ csrf_token() }}', // Pastikan CSRF token ada
-            //                 },
-            //                 body: JSON.stringify({
-            //                     checkin_date: today,
-            //                 }),
-            //             })
-            //             .then(response => response.json())
-            //             .then(data => {
-            //                 if (data.success) {
-            //                     alert(data.message);
-            //                     location.reload(); // Reload halaman setelah sukses
-            //                 } else {
-            //                     alert('Error: ' + data.message);
-            //                 }
-            //             })
-            //             .catch(error => {
-            //                 alert('Terjadi kesalahan: ' + error.message);
-            //             });
-            //     });
-            // });
+        function getSelectedGuests() {
+            const selected = [];
+            document.querySelectorAll('.guest-checkbox:checked').forEach((checkbox) => {
+                selected.push(checkbox.value);
+            });
+            return selected;
+        }
 
-            checkoutButtons.forEach(button => {
-                button.addEventListener('click', function() {
-                    const guestId = this.getAttribute('data-guest-id');
-                    const today = new Date().toISOString().split('T')[0]; // Tanggal hari ini
+        function toggleBulkButtons(isEnabled) {
+            const bulkCheckinBtn = document.getElementById('bulkCheckin');
+            const bulkCheckoutBtn = document.getElementById('bulkCheckout');
+            const bulkPlotRoomBtn = document.getElementById('bulkPlotRoom');
 
-                    fetch(`/guest/checkout/${guestId}`, {
+            // Jika ada tamu yang terpilih, tombol diaktifkan, jika tidak, dinonaktifkan
+            bulkCheckinBtn.disabled = !isEnabled;
+            bulkCheckoutBtn.disabled = !isEnabled;
+            bulkPlotRoomBtn.disabled = !isEnabled;
+        }
+
+        function checkSelectedGuests() {
+            const selectedGuests = getSelectedGuests(); // Dapatkan tamu yang terpilih
+            const isSelected = selectedGuests.length > 0; // Jika ada yang terpilih, tombol akan aktif
+            toggleBulkButtons(isSelected); // Aktifkan/Nonaktifkan tombol berdasarkan kondisi
+        }
+
+
+        document.getElementById('checkAll').addEventListener('change', (event) => {
+            const isChecked = event.target.checked;
+
+            // Tandai semua checkbox sesuai dengan status checkAll
+            document.querySelectorAll('.guest-checkbox').forEach((checkbox) => {
+                checkbox.checked = isChecked;
+            });
+
+            // Periksa apakah ada tamu yang terpilih
+            checkSelectedGuests();
+        });
+
+        document.querySelectorAll('.guest-checkbox').forEach((checkbox) => {
+            checkbox.addEventListener('change', () => {
+                // Periksa apakah ada tamu yang terpilih
+                checkSelectedGuests();
+            });
+        });
+
+        document.querySelectorAll('.plot-room-btn').forEach((button) => {
+            button.addEventListener('click', async (event) => {
+                let roomId = event.target.getAttribute('data-room-id');
+                const roomCapacity = event.target.getAttribute('data-room-capacity');
+                const selectedGuests = getSelectedGuests();
+                console.log('Room ID:', roomId, 'Selected Guests:', selectedGuests);
+
+                const data = {
+                    room_id: roomId,
+                    guests: selectedGuests
+                };
+                if (selectedGuests.length > roomCapacity) {
+                    alert("kapasitas tidak cukup")
+                } else {
+                    try {
+                        // Mengirim data ke controller menggunakan fetch
+                        const response = await fetch('/guest/bulk-plot-rooms', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                'X-CSRF-TOKEN': document.querySelector(
+                                        'meta[name="csrf-token"]')
+                                    .getAttribute('content'), // jika menggunakan CSRF token
                             },
-                            body: JSON.stringify({
-                                checkout_date: today,
-                            }),
-                        })
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.success) {
-                                alert(data.message);
-                                location.reload();
-                            } else {
-                                alert('Error: ' + data.message);
-                            }
-                        })
-                        .catch(error => {
-                            alert('Terjadi kesalahan: ' + error.message);
+                            body: JSON.stringify(data)
                         });
-                });
+
+                        // Menangani response dari server
+                        const result = await response.json();
+                        if (response.ok) {
+                            console.log('Data berhasil dikirim:', result);
+                            alert(result.message);
+                            const modal = bootstrap.Modal.getInstance(document
+                                .querySelector(`#bulkPlotRoomModal`));
+                            modal.hide();
+                            location.reload();
+
+                        } else {
+                            console.log('Terjadi kesalahan:', result.message);
+                        }
+                    } catch (error) {
+                        console.error('Terjadi error:', error);
+                    }
+                }
+
             });
+        });
 
+        document.getElementById('bulkCheckin').addEventListener('click', () => {
+            // Ambil semua checkbox yang terpilih
+            const selectedGuests = getSelectedGuests();
 
+            console.log(selectedGuests)
+
+            // Jika tidak ada tamu yang dipilih, tampilkan alert
+            if (selectedGuests.length === 0) {
+                alert('Pilih tamu terlebih dahulu!');
+                return;
+            }
+
+            fetch('/guest/bulk-checkin', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute(
+                            'content')
+                    },
+                    body: JSON.stringify({
+                        guest_ids: selectedGuests
+                    })
+                })
+                .then(response => {
+                    if (response.ok) {
+                        return response.json();
+                    } else {
+                        return response.json().then(err => Promise.reject(err));
+                    }
+                })
+                .then(data => {
+                    alert('Tamu berhasil di-check-in!');
+                    location.reload();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert(error.message || 'Terjadi kesalahan. Coba lagi!');
+                });
+        });
+        document.getElementById('bulkCheckout').addEventListener('click', () => {
+            // Ambil semua checkbox yang terpilih
+            const selectedGuests = getSelectedGuests();
+
+            console.log(selectedGuests)
+
+            // Jika tidak ada tamu yang dipilih, tampilkan alert
+            if (selectedGuests.length === 0) {
+                alert('Pilih tamu terlebih dahulu!');
+                return;
+            }
+
+            fetch('/guest/bulk-checkout', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute(
+                            'content')
+                    },
+                    body: JSON.stringify({
+                        guest_ids: selectedGuests
+                    })
+                })
+                .then(response => {
+                    if (response.ok) {
+                        return response.json();
+                    } else {
+                        return response.json().then(err => Promise.reject(err));
+                    }
+                })
+                .then(data => {
+                    alert('Tamu berhasil di-check-out!');
+                    location.reload();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert(error.message || 'Terjadi kesalahan. Coba lagi!');
+                });
         });
     </script>
 @endpush

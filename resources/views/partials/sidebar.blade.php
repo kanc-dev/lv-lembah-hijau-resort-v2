@@ -77,8 +77,8 @@
                 </li>
 
                 <li class="nav-item">
-                    <a class="nav-link menu-link {{ request()->is('room-report*') ? 'active' : '' }}"
-                        href="{{ route('room.report') }}">
+                    <a class="nav-link menu-link {{ request()->is('report-room*') ? 'active' : '' }}"
+                        href="{{ route('report.room') }}">
                         <i data-feather="file-text" class="icon-dual"></i> <span data-key="t-widgets">Room Report</span>
                     </a>
                 </li>

@@ -55,7 +55,7 @@
 
                                 @foreach ($data['bookings'] as $booking)
                                     <tr>
-                                        <td>{{ $booking->id }}</td>
+                                        <td>{{ $loop->iteration }}</td>
                                         <td>{{ $booking->event->nama_kelas }}</td>
                                         <td>{{ $booking->jumlah_peserta }}</td>
                                         <td>{{ $booking->originBranch->name }}</td>

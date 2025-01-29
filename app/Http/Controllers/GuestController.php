@@ -11,6 +11,7 @@ use App\Models\GuestCheckin;
 use App\Models\Room;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class GuestController extends Controller
 {
@@ -23,10 +24,10 @@ class GuestController extends Controller
         $branchId = $user->branch_id; // Asumsi field branch_id ada di tabel users
 
         if ($branchId) {
-            $rooms = Room::where('branch_id', $branchId)->get();
+            $rooms = Room::with('branch')->where('branch_id', $branchId)->get();
             $guests = Guest::with('branch.rooms', 'events', 'guestcheckins.room')->where('branch_id', $branchId)->get();
         } else {
-            $rooms = Room::all();
+            $rooms = Room::with('branch')->get();
             $guests = Guest::with('branch.rooms', 'events', 'guestcheckins.room')->get();
         }
         $data['guests'] = $guests;
@@ -114,6 +115,7 @@ class GuestController extends Controller
         $data['rooms'] = Room::all();
         $data['branches'] = Branch::all();
         $data['events'] = Event::all();
+        $data['selected_events'] = $guest->events()->pluck('events.id')->toArray();
         $data['page_title'] = 'Edit Tamu';
         return view('pages.guest.edit', compact('data'));
     }
@@ -126,21 +128,20 @@ class GuestController extends Controller
         $request->validate([
             'nama' => 'required|string|max:255',
             'jenis_kelamin' => 'required|string|max:1',
-            'branch_id' => 'required|exists:branches,id', // Validate branch_id
-            'batch' => 'required|string|max:255',
-            'kendaraan' => 'required|string|max:255',
-            'no_polisi' => 'required|string|max:255',
-            'kantor_cabang' => 'required|string|max:255',
             'no_hp' => 'required|string|max:15',
             'email' => 'required|email|max:255',
+            'kendaraan' => 'required|string|max:255',
+            'no_polisi' => 'required|string|max:255',
+            'branch_id' => 'required|exists:branches,id',
+            'event_id' => 'required|exists:events,id',
+            'batch' => 'required|string|max:255',
+            'kantor_cabang' => 'required|string|max:255',
             'tanggal_rencana_checkin' => 'required|date',
             'tanggal_rencana_checkout' => 'required|date',
-            'event_id' => 'required|exists:events,id', // Validate event_id
         ]);
 
-        $guest = Guest::findOrFail($id);
+        $guest = Guest::find($id);
 
-        // Update the guest record
         $guest->update([
             'nama' => $request->nama,
             'jenis_kelamin' => $request->jenis_kelamin,
@@ -153,9 +154,9 @@ class GuestController extends Controller
             'kantor_cabang' => $request->kantor_cabang,
             'tanggal_rencana_checkin' => $request->tanggal_rencana_checkin,
             'tanggal_rencana_checkout' => $request->tanggal_rencana_checkout,
-            'room_id' => $request->room_id,
-            'event_id' => $request->event_id,
         ]);
+
+        $guest->events()->sync([$request->event_id]);
 
         return redirect()->route('guest.index')->with('success', 'Guest updated successfully');
     }
@@ -178,7 +179,6 @@ class GuestController extends Controller
         try {
             $guest = Guest::findOrFail($guestId);
 
-            // Temukan kamar yang dipilih
             $room = Room::findOrFail($request->input('room_id'));
 
             // Pastikan kamar tidak dalam status unavailable
@@ -241,7 +241,6 @@ class GuestController extends Controller
                 ['guest_id' => $guestId],
                 [
                     'tanggal_checkin' => $checkinDate,
-                    // 'room_id' => $guest->room_id ?? null,
                 ]
             );
 
@@ -293,62 +292,89 @@ class GuestController extends Controller
         }
     }
 
-
-    public function getAvailableRooms($guestId)
+    public function bulkPlotRooms(Request $request)
     {
-        $guest = Guest::findOrFail($guestId);
-        $rooms = Room::where('branch_id', $guest->branch_id)->get();
-
-        return response()->json($rooms);
-    }
-
-    public function checkIn(Request $request, $guestId)
-    {
-        $request->validate([
-            'checkin_date' => 'required|date',
+        $validated = $request->validate([
             'room_id' => 'required|exists:rooms,id',
+            'guests' => 'required|array',
+            'guests.*' => 'exists:guests,id', // Pastikan ID tamu valid
         ]);
 
-        $guest = Guest::findOrFail($guestId);
-        $checkin = new GuestCheckin();
-        $checkin->guest_id = $guest->id;
-        $checkin->room_id = $request->room_id;
-        $checkin->tanggal_checkin = $request->checkin_date;
-        $checkin->save();
+        // Ambil data kamar
+        $room = Room::find($validated['room_id']);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Check-in successful!',
-            'checkin_date' => $checkin->tanggal_checkin,
-        ]);
-    }
-
-    public function checkOut(Request $request, $guestId)
-    {
-        $request->validate([
-            'checkout_date' => 'required|date',
-        ]);
-
-        // Cari check-in tamu
-        $guestCheckin = GuestCheckin::where('guest_id', $guestId)
-            ->whereNull('tanggal_checkout')  // Pastikan ini adalah check-in aktif
-            ->first();
-
-        if ($guestCheckin) {
-            // Update tanggal_checkout
-            $guestCheckin->tanggal_checkout = $request->checkout_date;
-            $guestCheckin->save();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Check-out date set successfully.',
-                'checkout_date' => $guestCheckin->tanggal_checkout
-            ]);
+        // Validasi kapasitas kamar
+        if ($room->kapasitas < count($validated['guests'])) {
+            return response()->json(['message' => 'Jumlah tamu melebihi kapasitas kamar.'], 400);
         }
 
-        return response()->json([
-            'success' => false,
-            'message' => 'No active check-in found for this guest.'
-        ]);
+        // Ambil tamu berdasarkan ID yang dipilih
+        $guests = Guest::whereIn('id', $validated['guests'])->get();
+
+        // Proses penugasan tamu ke kamar
+        foreach ($guests as $guest) {
+            // Cek apakah tamu sudah ada di guest_checkins dengan room_id yang sama
+            $existingCheckin = GuestCheckin::where('guest_id', $guest->id)->first();
+
+            if ($existingCheckin) {
+                // Jika tamu sudah ada, update room_id-nya
+                $existingCheckin->update([
+                    'room_id' => $room->id,
+                ]);
+            } else {
+                // Jika tamu belum ada, buat entri baru
+                GuestCheckin::create([
+                    'guest_id' => $guest->id,
+                    'room_id' => $room->id,
+                ]);
+            }
+        }
+
+        return response()->json(['message' => 'Kamar berhasil diploting']);
+    }
+
+
+    public function bulkCheckin(Request $request)
+    {
+        $guestIds = $request->input('guest_ids');
+
+        if (empty($guestIds)) {
+            return response()->json(['message' => 'Data tamu tidak valid.'], 400);
+        }
+
+        foreach ($guestIds as $guestId) {
+            $guest = Guest::find($guestId);
+            if ($guest) {
+                GuestCheckin::updateOrCreate(
+                    ['guest_id' => $guestId],
+                    ['tanggal_checkin' => now()]
+                );
+            }
+        }
+
+        return response()->json(['message' => 'Check-in berhasil dilakukan.']);
+    }
+
+    public function bulkCheckout(Request $request)
+    {
+        $guestIds = $request->input('guest_ids');
+
+        if (empty($guestIds)) {
+            return response()->json(['message' => 'Data tamu tidak valid.'], 400);
+        }
+
+        foreach ($guestIds as $guestId) {
+            $guest = Guest::find($guestId);
+
+            if ($guest) {
+                $checkin = GuestCheckin::where('guest_id', $guestId)->first();
+
+                if ($checkin && !$checkin->tanggal_checkout) {
+                    $checkin->update(['tanggal_checkout' => now()]);
+                }
+            }
+        }
+
+        return response()->json(['message' => 'Checkout berhasil dilakukan.']);
     }
 }

@@ -47,7 +47,11 @@ Route::middleware('auth')->group(function () {
     Route::post('/guest/checkin/{guestId}', [GuestController::class, 'setCheckinDate'])->name('guest.checkin');
     Route::post('/guest/checkout/{guestId}', [GuestController::class, 'setCheckoutDate'])->name('guest.checkout');
 
-    Route::get('/guest/rooms/{guestId}', [GuestController::class, 'getAvailableRooms']);
+    Route::post('/getAvailableRooms', [GuestController::class, 'getAvailableRooms']);
+    Route::post('/guest/bulk-plot-rooms', [GuestController::class, 'bulkPlotRooms'])->name('guest.bulkPlotRooms');
+
+    Route::post('/guest/bulk-checkin', [GuestController::class, 'bulkCheckin'])->name('guest.bulkCheckin');
+    Route::post('/guest/bulk-checkout', [GuestController::class, 'bulkCheckout'])->name('guest.bulkCheckout');
 
 
     Route::resource('event', EventController::class);
@@ -70,8 +74,12 @@ Route::middleware('auth')->group(function () {
     Route::delete('/room/{id}/destroy', [RoomController::class, 'destroy'])->name('room.destroy');
     Route::get('/available-rooms', [RoomController::class, 'getAvailableRooms'])->name('room.available_rooms');
 
+    Route::post('/room/bulk-plot-event', [RoomController::class, 'bulkPlotEvent'])->name('room.bulk-plot-event');
+
     Route::get('/status-room', [RoomController::class, 'status'])->name('status.room');
     Route::get('/report-room', [RoomController::class, 'report'])->name('report.room');
+
+    Route::post('/generate-room-reports', [RoomController::class, 'generateRoomReports'])->name('generate.room.reports');
 
 
     Route::get('/user', [UserController::class, 'index'])->name('user.index');

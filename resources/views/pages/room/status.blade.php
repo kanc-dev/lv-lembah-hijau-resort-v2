@@ -26,6 +26,14 @@
                 <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h5 class="mb-0 card-title">Status Kamar</h5>
+                        <form action="{{ route('generate.room.reports') }}" id="dailyReportForm" method="POST">
+                            @csrf
+                            <button type="submit" class="btn btn-primary" id="dailyReportButton">
+                                <i class="ri-calendar-line" id="buttonIcon"></i>
+                                <span id="buttonText">Daily Report</span>
+                                <i class="ri-loader-2-line ri-spin" id="loadingIcon" style="display: none;"></i>
+                            </button>
+                        </form>
                     </div>
                     <div class="card-body">
                         @if (session('success'))
@@ -69,7 +77,7 @@
                                         <td>{{ $room['sisa_bed'] ?? 0 }}</td>
                                         <td>{{ $room['event'] ?? 'N/A' }}</td>
                                         <td>
-                                            <div class="flex-wrap d-flex">
+                                            <div class="flex-wrap gap-1 d-flex">
                                                 @foreach ($room['tamu'] as $tamu)
                                                     <span
                                                         class="badge badge-soft-info">{{ $tamu['nama'] ? $tamu['nama'] : 'N/A' }}</span>
@@ -78,7 +86,7 @@
                                             </div>
                                         </td>
                                         <td>
-                                            <div class="flex-wrap d-flex">
+                                            <div class="flex-wrap gap-1 d-flex">
 
                                                 @foreach ($room['tamu'] as $tamu)
                                                     <span
@@ -87,7 +95,7 @@
                                             </div>
                                         </td>
                                         <td>
-                                            <div class="flex-wrap d-flex">
+                                            <div class="flex-wrap gap-1 d-flex">
                                                 @foreach ($room['tamu'] as $tamu)
                                                     <span
                                                         class="badge badge-soft-info">{{ $tamu['checkout'] ? date('d, M Y', strtotime($tamu['checkout'])) : 'N/A' }}</span>
@@ -106,3 +114,22 @@
         </div>
     </div>
 @endsection
+@push('scripts')
+    <script>
+        document.getElementById('dailyReportForm').addEventListener('submit', function(event) {
+            // Disable the button
+            const button = document.getElementById('dailyReportButton');
+            const loadingIcon = document.getElementById('loadingIcon');
+            const buttonIcon = document.getElementById('buttonIcon');
+            const buttonText = document.getElementById('buttonText');
+
+            // Disable the button
+            button.disabled = true;
+
+            // Show loading spinner, hide text and icon
+            loadingIcon.style.display = 'inline-block';
+            buttonIcon.style.display = 'none';
+            buttonText.textContent = 'Processing...';
+        });
+    </script>
+@endpush

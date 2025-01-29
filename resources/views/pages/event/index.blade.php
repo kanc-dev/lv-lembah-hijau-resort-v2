@@ -61,7 +61,7 @@
                                                     value="option{{ $event['id'] }}">
                                             </div>
                                         </th>
-                                        <td>{{ $event['id'] }}</td>
+                                        <td>{{ $loop->iteration }}</td>
                                         <td>{{ $event['nama_kelas'] }}</td>
                                         <td>{{ $event['deskripsi'] }}</td>
                                         <td>{{ isset($event['branch_id']) ? $event->branch['name'] : 'N/A' }}</td>

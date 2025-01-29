@@ -10,6 +10,7 @@ use App\Models\Branch;
 use App\Models\Event;
 use App\Models\RoomReport;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Auth;
 
 class RoomController extends Controller
@@ -29,11 +30,14 @@ class RoomController extends Controller
 
         if ($branchId == 0) {
             $rooms = Room::with(['branch', 'guestCheckins.guest.events'])->get();
+            $events = Event::all();
         } else {
             $rooms = Room::with(['branch', 'guestCheckins.guest.events'])->where('branch_id', $branchId)->get();
+            $events = Event::where('branch_id', $branchId)->get();
         }
 
         $data['rooms'] = $rooms;
+        $data['events'] = $events;
         $data['page_title'] = 'Data Kamar';
         // dd($data);
 
@@ -82,19 +86,28 @@ class RoomController extends Controller
         return view('pages.room.status', compact('data'));
     }
 
-
-
     public function report()
     {
         $user = auth()->user();
         $branchId = $user->branch_id;
 
-        // Query dengan filter berdasarkan branchId jika ada
+        $query = RoomReport::query();
         if ($branchId) {
-            $data['reports'] = RoomReport::where('branch_id', $branchId)->get();
-        } else {
-            $data['reports'] = RoomReport::all();
+            $query->where('branch_id', $branchId);
         }
+
+        $data['reports'] = $query->get();
+        $data['summary'] = $query
+            ->selectRaw('
+            report_date,
+            branch,
+            COUNT(CASE WHEN terisi > 0 THEN 1 END) as total_kamar_terisi,
+            COUNT(CASE WHEN terisi = 0 THEN 1 END) as total_kamar_kosong
+        ')
+            ->groupBy('report_date', 'branch')
+            ->orderBy('report_date', 'desc')
+            ->get();
+
 
         $data['page_title'] = 'Laporan Kamar';
         return view('pages.room.report', compact('data'));
@@ -245,5 +258,40 @@ class RoomController extends Controller
         $availableRooms = Room::whereNotIn('id', $bookedRoomIds)->get();
 
         return response()->json($availableRooms);
+    }
+
+    public function bulkPlotEvent(Request $request)
+    {
+
+        // $roomIds = explode(',', $request->input('room_ids'));
+
+        // $request->merge(['room_ids' => $roomIds]);
+
+        // dd($request->all());
+
+        $roomIds = explode(',', $request->input('room_ids'));
+
+        $request->merge(['room_ids' => $roomIds]);
+
+
+        $request->validate([
+            'event_id' => 'required|exists:events,id',
+            'room_ids' => 'required|array',
+            'room_ids.*' => 'exists:rooms,id',
+        ]);
+
+        $eventId = $request->input('event_id');
+        $roomIds = $request->input('room_ids');
+
+        Room::whereIn('id', $roomIds)->update(['event_id' => $eventId]);
+
+        return redirect()->back()->with('success', 'Bulk event successfully applied to rooms.');
+    }
+
+    public function generateRoomReports(Request $request)
+    {
+        Artisan::call('generate:room-reports');
+
+        return redirect()->back()->with('success', 'Daily room report generated successfully!');
     }
 }
