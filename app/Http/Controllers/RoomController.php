@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\RoomReportExport;
 use App\Models\Room;
 use App\Http\Requests\StoreRoomRequest;
 use App\Http\Requests\UpdateRoomRequest;
@@ -12,6 +13,7 @@ use App\Models\RoomReport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Auth;
+use Maatwebsite\Excel\Facades\Excel;
 
 class RoomController extends Controller
 {
@@ -293,5 +295,16 @@ class RoomController extends Controller
         Artisan::call('generate:room-reports');
 
         return redirect()->back()->with('success', 'Daily room report generated successfully!');
+    }
+
+    public function export(Request $request)
+    {
+        $request->validate([
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after_or_equal:start_date',
+        ]);
+        $branchId = $request->input('branch_id');
+
+        return Excel::download(new RoomReportExport($request->start_date, $request->end_date, $branchId), 'room_report.xlsx');
     }
 }

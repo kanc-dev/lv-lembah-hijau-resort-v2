@@ -81,6 +81,8 @@ Route::middleware('auth')->group(function () {
 
     Route::post('/generate-room-reports', [RoomController::class, 'generateRoomReports'])->name('generate.room.reports');
 
+    Route::get('/room/export', [RoomController::class, 'export'])->name('room.export');
+
 
     Route::get('/user', [UserController::class, 'index'])->name('user.index');
     Route::get('/branch', [BranchController::class, 'index'])->name('branch.index');

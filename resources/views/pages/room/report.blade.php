@@ -63,7 +63,9 @@
             <div class="col-lg-6">
                 <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center">
-                        {{-- <h5 class="mb-0 card-title">Report Kamar</h5> --}}
+                        <h5 class="mb-0 card-title">Report Kamar</h5>
+                        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#exportModal">Export</button>
+
                     </div>
                     <div class="card-body">
                         <table id="room-reports" class="table align-middle nowrap" style="width:100%">
@@ -89,6 +91,35 @@
                         </table>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Pilih Range Tanggal -->
+    <div class="modal fade" id="exportModal" tabindex="-1" aria-labelledby="exportModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exportModalLabel">Pilih Rentang Tanggal</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form action="{{ route('room.export') }}" method="GET">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="start_date" class="form-label">Start Date</label>
+                            <input type="date" class="form-control" name="start_date" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="end_date" class="form-label">End Date</label>
+                            <input type="date" class="form-control" name="end_date" required>
+                        </div>
+                    </div>
+                    <input type="hidden" id="branch_id" name="branch_id" value="{{ Auth::user()->branch_id }}" readonly>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-success">Export</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
