@@ -18,7 +18,15 @@ class BookingController extends Controller
      */
     public function index()
     {
-        $bookings = Booking::with(['event', 'originBranch', 'destinationBranch'])->get();
+        $user = Auth::user();
+        $branchId = $user->branch_id;
+
+        if ($branchId) {
+            $bookings = Booking::with(['event', 'originBranch', 'destinationBranch'])->where('unit_origin_id', $branchId)->get();
+        } else {
+            $bookings = Booking::with(['event', 'originBranch', 'destinationBranch'])->get();
+        }
+
         $data['bookings'] = $bookings;
         $data['page_title'] = 'Data Booking';
         return view('pages.booking.index', compact('data'));

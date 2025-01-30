@@ -35,11 +35,11 @@
                                 <!-- Kolom 1 -->
                                 <div class="col-md-6">
                                     <div class="mb-3">
-                                        <label for="event_id" class="form-label">Event <span
+                                        <label for="event_id" class="form-label">Kelas / Pendidikan <span
                                                 class="text-danger">*</span></label>
                                         <select class="form-select @error('event_id') is-invalid @enderror" id="event_id"
                                             name="event_id" required>
-                                            <option value="">Pilih Event</option>
+                                            <option value="">Pilih Kelas / Pendidikan</option>
                                             @foreach ($data['events'] as $event)
                                                 <option value="{{ $event->id }}"
                                                     {{ old('event_id') == $event->id ? 'selected' : '' }}>

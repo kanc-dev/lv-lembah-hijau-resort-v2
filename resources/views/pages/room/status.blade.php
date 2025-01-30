@@ -28,11 +28,14 @@
                         <h5 class="mb-0 card-title">Status Kamar</h5>
                         <form action="{{ route('generate.room.reports') }}" id="dailyReportForm" method="POST">
                             @csrf
-                            <button type="submit" class="btn btn-primary" id="dailyReportButton">
+                            <button type="submit" class="btn btn-success" id="dailyReportButton">
                                 <i class="ri-calendar-line" id="buttonIcon"></i>
                                 <span id="buttonText">Daily Report</span>
                                 <i class="ri-loader-2-line ri-spin" id="loadingIcon" style="display: none;"></i>
                             </button>
+                            <div class="btn btn-primary">
+                                ({{ isset($data['rooms']) && $data['rooms']->sum('terisi') ? number_format(($data['rooms']->sum('terisi') / $data['rooms']->sum('kapasitas')) * 100, 2) : 0 }}%)
+                                Occupancy</div>
                         </form>
                     </div>
                     <div class="card-body">
@@ -49,9 +52,10 @@
                                     <th>Unit</th>
                                     <th>Tipe</th>
                                     <th>Status</th>
-                                    <th>Kapasitas</th>
-                                    <th>Terisi</th>
-                                    <th>Tersedia</th>
+                                    <th>Total Bed</th>
+                                    <th>Bed Terisi</th>
+                                    <th>Bed Tersedia</th>
+                                    <th>Occupancy</th>
                                     <th>Event</th>
                                     <th>Tamu</th>
                                     <th>Check-In</th>
@@ -75,6 +79,7 @@
 
                                         <td>{{ $room['terisi'] }}</td>
                                         <td>{{ $room['sisa_bed'] ?? 0 }}</td>
+                                        <td>{{ ($room['terisi'] / $room['kapasitas']) * 100 }}%</td>
                                         <td>{{ $room['event'] ?? 'N/A' }}</td>
                                         <td>
                                             <div class="flex-wrap gap-1 d-flex">

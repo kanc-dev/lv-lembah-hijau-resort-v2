@@ -134,7 +134,6 @@ class HomeController extends Controller
             $data['rooms'] = $rooms;
         }
 
-
         $data['occupancy_of_branch'] = $this->_getBranchesWithOccupancy();
         $data['total_branch_active'] = $branchesWithOccupancy->count();
 
@@ -163,6 +162,7 @@ class HomeController extends Controller
 
         // dd($data['calendar_data_occupancy']);
         // dd($data['occupancy_of_branch']);
+
 
         $data['page_title'] = 'Dashboard';
         return view('pages.home.index', compact('data', 'branches', 'branchId'));
@@ -289,6 +289,139 @@ class HomeController extends Controller
         return view("pages.home.$branchName", compact('data', 'branches', 'branchId'));
     }
 
+    public function monitoring()
+    {
+        $today = Carbon::now()->startOfDay();
+
+        $user = Auth::user();
+        $branchId = $user->branch_id ?? '';
+
+        if (!$branchId) {
+            $branchName = request()->segment(2);
+
+            $branchMapping = [
+                'bandung' => 1,
+                'yogyakarta' => 2,
+                'surabaya' => 3,
+                'padang' => 4,
+                'makassar' => 5,
+            ];
+            $branchId = $branchMapping[$branchName] ?? '';
+        }
+
+
+        if ($branchId) {
+            $data['is_branch'] = true;
+            $data['is_admin'] = false;
+            $branches = Branch::where('id', $branchId)->get();
+        } else {
+
+            $data['is_branch'] = false;
+            $data['is_admin'] = true;
+            $branches = Branch::all();
+        }
+
+        // Ambil data terkait cabang atau data akumulasi
+        $branchesWithOccupancy = $branches->map(function ($branch) {
+            $totalRooms = $branch->rooms->count();
+            $occupiedRooms = $branch->rooms->filter(function ($room) {
+                return $room->guestCheckins()->where('tanggal_checkout', '>=', now()->format('Y-m-d'))->exists();
+            })->count();
+            return [
+                'branch' => $branch,
+                'occupancy' => [
+                    'total' => $totalRooms,
+                    'occupied' => $occupiedRooms,
+                    'empty' => $totalRooms - $occupiedRooms
+                ]
+            ];
+        });
+
+        // Akumulasi data untuk semua cabang jika admin
+        if ($data['is_admin']) {
+            $totalRooms = $branchesWithOccupancy->sum(function ($branchData) {
+                return $branchData['occupancy']['total'];
+            });
+            $occupiedRooms = $branchesWithOccupancy->sum(function ($branchData) {
+                return $branchData['occupancy']['occupied'];
+            });
+            $emptyRooms = $totalRooms - $occupiedRooms;
+            $totalGuests = $branchesWithOccupancy->sum(function ($branchData) {
+                return $branchData['branch']->rooms->sum(function ($room) {
+                    return $room->guestCheckins()->count();
+                });
+            });
+        } else {
+            // Jika pengguna bukan admin, ambil data untuk cabang yang dipilih saja
+            $branchData = $branchesWithOccupancy->first();
+            $totalRooms = $branchData['occupancy']['total'];
+            $occupiedRooms = $branchData['occupancy']['occupied'];
+            $emptyRooms = $branchData['occupancy']['empty'];
+            $totalGuests = $branchData['branch']->rooms->sum(function ($room) {
+                return $room->guestCheckins()->count();
+            });
+        }
+
+        $bookings = Booking::all();
+        if ($data['is_branch']) {
+            $data['bookings'] = $bookings->where('origin_branch_id', $branchId);
+        } else {
+            $data['bookings'] = $bookings;
+        }
+
+        $events = Event::all();
+        if ($data['is_branch']) {
+            $data['events'] = $events->where('branch_id', $branchId);
+        } else {
+            $data['events'] = $events;
+        }
+
+        $guests = Guest::all();
+        if ($data['is_branch']) {
+            $data['guests'] = $guests->where('branch_id', $branchId);
+        } else {
+            $data['guests'] = $guests;
+        }
+
+        $rooms = Room::all();
+        if ($data['is_branch']) {
+            $data['rooms'] = $rooms->where('branch_id', $branchId);
+        } else {
+            $data['rooms'] = $rooms;
+        }
+
+
+        $data['occupancy_of_branch'] = $this->_getBranchesWithOccupancy();
+        $data['total_branch_active'] = $branchesWithOccupancy->count();
+
+        $data['total_booking_active'] =  $data['bookings']->count();
+        $data['total_event_active'] = $data['events']->count();
+        $data['total_guest_active'] = $this->_getRoomOccupancy($branchId)['total_guests'];
+        $data['total_room_active'] = $this->_getRoomOccupancy($branchId)['total_rooms'];
+        $data['total_room_capacity'] = $this->_getRoomOccupancy($branchId)['total_capacity'];
+        $data['total_room_occupied'] = $this->_getRoomOccupancy($branchId)['occupied_percentage'];
+        $data['total_room_empty'] = $this->_getRoomOccupancy($branchId)['empty_percentage'];
+
+        $data['event_booking'] = $this->_getUpcomingBookings($branchId);
+
+        $data['branch_occupancy'] = $branchesWithOccupancy;
+        $data['branches'] = $branchesWithOccupancy;
+        $data['branchs'] = $branches;
+        $data['total_rooms'] = $totalRooms;
+        $data['occupied_rooms'] = $occupiedRooms;
+        $data['empty_rooms'] = $emptyRooms;
+        $data['total_guests'] = $totalGuests;
+        $data['bookings'] = Booking::all();
+        $data['events'] = Event::all();
+        $data['guests_of_branch'] = $this->_getGuestOfBranch();
+        $data['calendar_data_occupancy'] = $this->getCalendarDataOccupancy();
+        $data['branch_list'] = Branch::all();
+
+        $data['page_title'] = 'Dashboard';
+        // dd($data);
+        return view('pages.home.monitoring', compact('data', 'branches', 'branchId'));
+    }
+
 
     private function _getBranchesWithOccupancy()
     {
@@ -331,31 +464,43 @@ class HomeController extends Controller
         return $branchesWithOccupancy;
     }
 
-
     private function _getRoomOccupancy($branchId = null)
     {
         $query = DB::table('rooms')
             ->leftJoin('guest_checkins', 'rooms.id', '=', 'guest_checkins.room_id')
-            ->selectRaw(
-                'COUNT(DISTINCT rooms.id) as total_rooms,
-             SUM(rooms.kapasitas) as total_capacity,
-             COUNT(guest_checkins.id) as total_guests'
-            );
+            ->select(
+                DB::raw('COUNT(guest_checkins.id) as total_guests'),
+                'rooms.id',
+                'rooms.branch_id', // Kolom lain yang ingin Anda tampilkan
+                'rooms.nama',
+                'rooms.kapasitas', // Kolom lainnya yang ingin Anda tampilkan
+                'rooms.status'
+            )
+            ->where('rooms.status', 'available')
+            ->groupBy('rooms.id', 'rooms.branch_id', 'rooms.nama', 'rooms.kapasitas', 'rooms.status') // Semua kolom rooms yang digunakan di SELECT
+            ->get();
 
+
+        $data = [];
         if ($branchId) {
-            $query->where('rooms.branch_id', $branchId);
+            $data['total_rooms'] = $query->where('branch_id', $branchId)->count();
+            $data['total_capacity'] = $query->where('branch_id', $branchId)->sum('kapasitas');
+            $data['total_guests'] = $query->where('branch_id', $branchId)->sum('total_guests');
+        } else {
+            $data['total_rooms'] = $query->count();
+            $data['total_capacity'] = $query->sum('kapasitas');
+            $data['total_guests'] = $query->sum('total_guests');
         }
 
-        $data = $query->first();
 
-        $totalRooms = $data->total_rooms ?? 0;
-        $totalCapacity = $data->total_capacity ?? 0;
-        $totalGuests = $data->total_guests ?? 0;
+        $totalRooms =  $data['total_rooms'] ?? 0;
+        $totalCapacity = $data['total_capacity'] ?? 0;
+        $totalGuests = $data['total_guests'] ?? 0;
 
         $occupiedPercentage = $totalCapacity > 0 ? ($totalGuests / $totalCapacity) * 100 : 0;
         $emptyPercentage = 100 - $occupiedPercentage;
 
-        return $data = [
+        return [
             'total_rooms' => $totalRooms,
             'total_capacity' => $totalCapacity,
             'total_guests' => $totalGuests,
@@ -381,67 +526,6 @@ class HomeController extends Controller
 
         return $bookings;
     }
-
-    private function _showOccupancy()
-    {
-        $today = now()->format('Y-m-d'); // Mendapatkan tanggal hari ini
-        $yesterday = now()->subDay()->format('Y-m-d'); // Mendapatkan tanggal hari sebelumnya
-
-        // Ambil semua cabang dengan data kamar dan guest_checkins
-        $branches = Branch::with(['rooms' => function ($query) {
-            $query->select('id', 'branch_id', 'status'); // Ambil status kamar
-        }])
-            ->get();
-
-        $branchesWithOccupancy = $branches->map(function ($branch) use ($today, $yesterday) {
-            // Hitung total kamar dan kamar terisi pada hari ini
-            $totalRooms = $branch->rooms->count();
-            $occupiedRoomsToday = $branch->rooms->filter(function ($room) use ($today) {
-                return $room->guestCheckins()->where(function ($query) use ($today) {
-                    $query->where('tanggal_checkin', '<=', $today)
-                        ->where(function ($query) use ($today) {
-                            $query->where('tanggal_checkout', '>=', $today)
-                                ->orWhereNull('tanggal_checkout');
-                        });
-                })->exists();
-            })->count();
-
-            // Hitung kamar terisi pada hari sebelumnya
-            $occupiedRoomsYesterday = $branch->rooms->filter(function ($room) use ($yesterday) {
-                return $room->guestCheckins()->where(function ($query) use ($yesterday) {
-                    $query->where('tanggal_checkin', '<=', $yesterday)
-                        ->where(function ($query) use ($yesterday) {
-                            $query->where('tanggal_checkout', '>=', $yesterday)
-                                ->orWhereNull('tanggal_checkout');
-                        });
-                })->exists();
-            })->count();
-
-            // Menghitung perbandingan persentase okupansi hari ini dan kemarin
-            $occupancyPercentageToday = $totalRooms > 0 ? ($occupiedRoomsToday / $totalRooms) * 100 : 0;
-            $occupancyPercentageYesterday = $totalRooms > 0 ? ($occupiedRoomsYesterday / $totalRooms) * 100 : 0;
-
-            // Menghitung selisih persentase
-            $percentageDifference = $occupancyPercentageToday - $occupancyPercentageYesterday;
-
-            // Menyimpan data yang akan dikirim ke view
-            $branch->occupancy = [
-                'occupied' => $occupiedRoomsToday,
-                'total' => $totalRooms,
-                'percentage_today' => $occupancyPercentageToday,
-                'percentage_difference' => $percentageDifference,  // Selisih persentase hari ini vs hari kemarin
-                'yesterday' => $yesterday,  // Menambahkan tanggal sebelumnya
-            ];
-
-            return $branch;
-        });
-
-        $data = $branchesWithOccupancy;
-
-        return $data;
-    }
-
-
 
     private function _getGuestOfBranch()
     {
@@ -488,9 +572,7 @@ class HomeController extends Controller
 
             $dates = $dates->unique()->sort();
 
-
             $chartData['categories'] = $dates->values()->toArray();
-
 
             foreach ($chartData['categories'] as $date) {
                 $count = 0;

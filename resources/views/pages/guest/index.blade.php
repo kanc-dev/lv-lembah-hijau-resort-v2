@@ -54,7 +54,7 @@
                                     <th>Check-in</th>
                                     <th>Check-out</th>
                                     <th>Unit</th>
-                                    <th>Event</th>
+                                    <th>Kelas / Pendidikan</th>
                                     <th>Batch</th>
                                     <th>Telepon</th>
                                     <th>Email</th>

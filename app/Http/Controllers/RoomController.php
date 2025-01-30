@@ -101,14 +101,21 @@ class RoomController extends Controller
         $data['reports'] = $query->get();
         $data['summary'] = $query
             ->selectRaw('
-            report_date,
-            branch,
-            COUNT(CASE WHEN terisi > 0 THEN 1 END) as total_kamar_terisi,
-            COUNT(CASE WHEN terisi = 0 THEN 1 END) as total_kamar_kosong
-        ')
+                report_date,
+                branch,
+                COUNT(*) as total_kamar,  -- Total kamar
+                COUNT(CASE WHEN terisi > 0 THEN 1 END) as total_kamar_terisi,  -- Total kamar terisi
+                COUNT(CASE WHEN terisi = 0 THEN 1 END) as total_kamar_kosong,  -- Total kamar kosong
+                SUM(kapasitas) as total_kapasitas,  -- Total kapasitas
+                SUM(CASE WHEN terisi > 0 THEN terisi ELSE 0 END) as total_bed_terisi,  -- Total bed terisi
+                SUM(CASE WHEN sisa_bed > 0 THEN sisa_bed ELSE 0 END) as total_bed_tersedia  -- Total bed tersedia
+            ')
             ->groupBy('report_date', 'branch')
             ->orderBy('report_date', 'desc')
             ->get();
+
+        // return response()->json($data['reports']);
+        // dd($data['summary']);
 
 
         $data['page_title'] = 'Laporan Kamar';

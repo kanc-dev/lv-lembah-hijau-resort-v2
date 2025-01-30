@@ -47,7 +47,7 @@
                                         </div>
                                     </th>
                                     <th>ID</th>
-                                    <th>Nama Event</th>
+                                    <th>Nama Kelas / Pendidikan</th>
                                     <th>Deskripsi</th>
                                     <th>Unit / Branch</th>
                                 </tr>

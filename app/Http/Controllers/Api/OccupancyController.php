@@ -42,26 +42,39 @@ class OccupancyController extends Controller
     {
         $query = DB::table('rooms')
             ->leftJoin('guest_checkins', 'rooms.id', '=', 'guest_checkins.room_id')
-            ->selectRaw(
-                'COUNT(DISTINCT rooms.id) as total_rooms,
-             SUM(rooms.kapasitas) as total_capacity,
-             COUNT(guest_checkins.id) as total_guests'
-            );
+            ->select(
+                DB::raw('COUNT(guest_checkins.id) as total_guests'),
+                'rooms.id',
+                'rooms.branch_id', // Kolom lain yang ingin Anda tampilkan
+                'rooms.nama',
+                'rooms.kapasitas', // Kolom lainnya yang ingin Anda tampilkan
+                'rooms.status'
+            )
+            ->where('rooms.status', 'available')
+            ->groupBy('rooms.id', 'rooms.branch_id', 'rooms.nama', 'rooms.kapasitas', 'rooms.status') // Semua kolom rooms yang digunakan di SELECT
+            ->get();
 
+
+        $data = [];
         if ($branchId) {
-            $query->where('rooms.branch_id', $branchId);
+            $data['total_rooms'] = $query->where('branch_id', $branchId)->count();
+            $data['total_capacity'] = $query->where('branch_id', $branchId)->sum('kapasitas');
+            $data['total_guests'] = $query->where('branch_id', $branchId)->sum('total_guests');
+        } else {
+            $data['total_rooms'] = $query->count();
+            $data['total_capacity'] = $query->sum('kapasitas');
+            $data['total_guests'] = $query->sum('total_guests');
         }
 
-        $data = $query->first();
 
-        $totalRooms = $data->total_rooms ?? 0;
-        $totalCapacity = $data->total_capacity ?? 0;
-        $totalGuests = $data->total_guests ?? 0;
+        $totalRooms =  $data['total_rooms'] ?? 0;
+        $totalCapacity = $data['total_capacity'] ?? 0;
+        $totalGuests = $data['total_guests'] ?? 0;
 
         $occupiedPercentage = $totalCapacity > 0 ? ($totalGuests / $totalCapacity) * 100 : 0;
         $emptyPercentage = 100 - $occupiedPercentage;
 
-        return $data = [
+        return [
             'total_rooms' => $totalRooms,
             'total_capacity' => $totalCapacity,
             'total_guests' => $totalGuests,
@@ -69,8 +82,6 @@ class OccupancyController extends Controller
             'empty_percentage' => $emptyPercentage
         ];
     }
-
-
 
     public function _getRoomEmptyOccupied(Request $request)
     {

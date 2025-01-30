@@ -47,12 +47,16 @@ class GuestController extends Controller
 
         if ($branchId) {
             $branches = Branch::where('id', $branchId)->get();
+            $events = Event::where('branch_id', $branchId)->get();
+            $rooms = Room::where('branch_id', $branchId)->get();
         } else {
             $branches = Branch::all();
+            $events = Event::all();
+            $rooms = Room::all();
         }
-        $data['rooms'] = Room::all();
+        $data['rooms'] = $rooms;
         $data['branches'] = $branches;
-        $data['events'] = Event::all();
+        $data['events'] = $events;
         $data['page_title'] = 'Tambah Tamu';
         return view('pages.guest.create', compact('data'));
     }

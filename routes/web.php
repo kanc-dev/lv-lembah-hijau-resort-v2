@@ -5,6 +5,7 @@ use App\Http\Controllers\BranchController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\GuestController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\MonitoringController;
 use App\Http\Controllers\RegistrasiController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\RoomController;
@@ -37,6 +38,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/branch-room-occupancy-data', [HomeController::class, 'getBranchOccupancyChartData'])->name('branch-room-occupancy-data');
     Route::get('/calendar-occupancy-data', [HomeController::class, 'getCalendarDataOccupancy'])->name('calendar-occupancy-data');
 
+    // Montioring
+    Route::get('/monitoring', [MonitoringController::class, 'index'])->name('monitoring');
+    Route::get('/monitoring/occupancy-monthly', [MonitoringController::class, 'monthlyOccupancy']);
+    Route::get('/monitoring/occupancy-daily', [MonitoringController::class, 'dailyOccupancy']);
+    Route::get('/monitoring/graph-occupancy', [MonitoringController::class, 'getGraphOccupancy']);
 
     // Route::get('/booking', [BookingController::class, 'index'])->name('booking.index');
     Route::resource('booking', BookingController::class);

@@ -40,6 +40,16 @@
                     </a>
                 </li>
 
+                @if (Auth::user()->branch_id == 0)
+                    <li class="nav-item">
+                        <a class="nav-link menu-link {{ request()->is('monitoring*') ? 'active' : '' }}"
+                            href="{{ url('/monitoring') }}">
+                            <i data-feather="activity" class="icon-dual"></i> <span data-key="t-dashboards">
+                                Monitoring</span>
+                        </a>
+                    </li>
+                @endif
+
                 <li class="nav-item">
                     <a class="nav-link menu-link {{ request()->is('booking*') ? 'active' : '' }}"
                         href="{{ route('booking.index') }}">
@@ -57,7 +67,8 @@
                 <li class="nav-item">
                     <a class="nav-link menu-link {{ request()->is('event*') ? 'active' : '' }}"
                         href="{{ route('event.index') }}">
-                        <i data-feather="book" class="icon-dual"></i> <span data-key="t-widgets">Event/Class</span>
+                        <i data-feather="book" class="icon-dual"></i> <span data-key="t-widgets">Class /
+                            Education</span>
                     </a>
                 </li>
 
