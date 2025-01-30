@@ -65,7 +65,7 @@
                             <tbody>
                                 @foreach ($data['rooms'] as $room)
                                     <tr>
-                                        <td>{{ $room['id'] }}</td>
+                                        <td>{{ $loop->iteration }}</td>
                                         <td>{{ $room['nama'] }}</td>
                                         <td>{{ $room['branch'] }}</td>
                                         <td>{{ $room['tipe'] }}</td>
