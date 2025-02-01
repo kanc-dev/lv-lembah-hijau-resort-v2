@@ -7,6 +7,25 @@
             <div class="mt-3 mt-lg-0">
                 <form action="javascript:void(0);">
                     <div class="mb-0 row g-3 align-items-center">
+                        <div class="gap-2 col-sm-auto d-flex align-items-center">
+                            <select name="branch_id" class="border form-select" id="branch_id">
+                                <option value="">Daily</option>
+                                <option value="">Monthly</option>
+                                <option value="">Yearly</option>
+                            </select>
+                            <div class="input-group">
+                                <input type="month" class="border form-control" id="month-picker" value="">
+                                <div class="text-white input-group-text bg-primary border-primary">
+                                    <i class="ri-calendar-2-line"></i>
+                                </div>
+                            </div>
+                            <button id="filter-btn-occupancy-monthly" class="btn btn-primary ms-3"
+                                type="button">Filter</button>
+                        </div>
+                    </div>
+                </form>
+                <form action="javascript:void(0);">
+                    <div class="mb-0 row g-3 align-items-center">
                         <div class="col-sm-auto">
                             <div class="input-group">
                                 <input type="month" class="border form-control" id="filterMonth">

@@ -56,6 +56,14 @@
                                     </tr>
                                 @endforeach
                             </tbody>
+                            <tfoot>
+                                <tr>
+                                    <th colspan="3">Summary</th>
+                                    <th>{{ $data['reports'] ? $data['reports']->sum('kapasitas') : 0 }}</th>
+                                    <th>{{ $data['reports'] ? $data['reports']->sum('terisi') : 0 }}</th>
+                                    <th>{{ $data['reports'] ? $data['reports']->sum('sisa_bed') : 0 }}</th>
+                                </tr>
+                            </tfoot>
                         </table>
                     </div>
                 </div>
@@ -73,12 +81,12 @@
                                 <tr>
                                     <th>Tanggal</th>
                                     <th>Unit</th>
-                                    <th>Total Kamar</th>
-                                    <th>Total Kamar Terisi</th>
-                                    <th>Total Kamar Kosong</th>
-                                    <th>Total Kapasitas</th>
-                                    <th>Total Bed Terisi</th>
-                                    <th>Total Bed Tersedia</th>
+                                    {{-- <th>Total Kamar</th>
+                                    <th>Total Kamar Terisi</th> --}}
+                                    <th>Kamar Kosong</th>
+                                    {{-- <th>Total Kapasitas</th> --}}
+                                    <th>Bed Terisi</th>
+                                    <th>Bed Tersedia</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -86,16 +94,27 @@
                                     <tr>
                                         <td>{{ date('d, M Y', strtotime($summary['report_date'])) }}</td>
                                         <td>{{ $summary['branch'] }}</td>
-                                        <td>{{ $summary['total_kamar'] }}</td>
-                                        <td>{{ $summary['total_kamar_terisi'] }}</td>
+                                        {{-- <td>{{ $summary['total_kamar'] }}</td>
+                                        <td>{{ $summary['total_kamar_terisi'] }}</td> --}}
                                         <td>{{ $summary['total_kamar_kosong'] }}</td>
-                                        <td>{{ $summary['total_kapasitas'] }}</td>
+                                        {{-- <td>{{ $summary['total_kapasitas'] }}</td> --}}
                                         <td>{{ $summary['total_bed_terisi'] }}</td>
                                         <td>{{ $summary['total_bed_tersedia'] }}</td>
                                     </tr>
                                 @endforeach
 
                             </tbody>
+                            <tfoot>
+                                <tr>
+                                    <th colspan="2">Summary</th>
+                                    {{-- <th>{{ $data['summary'] ? $data['summary']->sum('total_kamar') : 0 }}</th> --}}
+                                    {{-- <th>{{ $data['summary'] ? $data['summary']->sum('total_kamar_terisi') : 0 }}</th> --}}
+                                    <th>{{ $data['summary'] ? $data['summary']->sum('total_kamar_kosong') : 0 }}</th>
+                                    {{-- <th>{{ $data['summary'] ? $data['summary']->sum('total_kapasitas') : 0 }}</th> --}}
+                                    <th>{{ $data['summary'] ? $data['summary']->sum('total_bed_terisi') : 0 }}</th>
+                                    <th>{{ $data['summary'] ? $data['summary']->sum('total_bed_tersedia') : 0 }}</th>
+                                </tr>
+                            </tfoot>
                         </table>
                     </div>
                 </div>
@@ -136,14 +155,14 @@
     <script>
         $(document).ready(function() {
             $('#room-reports').DataTable({
-                responsive: true, // Membuat tabel responsif pada ukuran layar kecil
-                paging: true, // Mengaktifkan pagination
-                searching: true, // Mengaktifkan fitur pencarian
-                ordering: true, // Mengaktifkan fitur pengurutan
-                info: true, // Menampilkan informasi jumlah data
-                autoWidth: false // Menonaktifkan pengaturan lebar otomatis
+                // responsive: true,
+                paging: true,
+                searching: true,
+                ordering: true,
+                info: true,
+                autoWidth: true,
+                scrollX: true
             });
-
         });
     </script>
 @endpush

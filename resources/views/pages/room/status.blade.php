@@ -79,7 +79,7 @@
 
                                         <td>{{ $room['terisi'] }}</td>
                                         <td>{{ $room['sisa_bed'] ?? 0 }}</td>
-                                        <td>{{ ($room['terisi'] / $room['kapasitas']) * 100 }}%</td>
+                                        <td>{{ number_format(($room['terisi'] / $room['kapasitas']) * 100, 2) }}%</td>
                                         <td>{{ $room['event'] ?? 'N/A' }}</td>
                                         <td>
                                             <div class="flex-wrap gap-1 d-flex">
@@ -112,6 +112,17 @@
                                     </tr>
                                 @endforeach
                             </tbody>
+                            <tfoot>
+                                <tr>
+                                    <th colspan="5">Summary</th>
+                                    <th>{{ $data['rooms'] ? $data['rooms']->sum('kapasitas') : 0 }}</th>
+                                    <th>{{ $data['rooms'] ? $data['rooms']->sum('terisi') : 0 }}</th>
+                                    <th>{{ $data['rooms'] ? $data['rooms']->sum('sisa_bed') : 0 }}</th>
+                                    <th>{{ $data['rooms'] ? number_format(($data['rooms']->sum('terisi') / $data['rooms']->sum('kapasitas')) * 100, 2) : 0 }}%
+                                    </th>
+                                    <th colspan="4"></th>
+                                </tr>
+                            </tfoot>
                         </table>
                     </div>
                 </div>
