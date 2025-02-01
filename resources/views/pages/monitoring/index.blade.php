@@ -29,6 +29,7 @@
             <x-widget-occupancy-monthly :data="$data" />
             <x-widget-occupancy-daily :data="$data" />
             <x-widget-occupancy-grafik :data="$data" />
+            <x-widget-timeline-event :data="$data" />
         @else
         @endif
 

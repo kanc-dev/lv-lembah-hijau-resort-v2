@@ -8,23 +8,27 @@
                 <form action="javascript:void(0);">
                     <div class="mb-0 row g-3 align-items-center">
                         <div class="gap-2 col-sm-auto d-flex align-items-center">
-                            <select name="branch_id" class="border form-select" id="branch_id">
-                                <option value="">Daily</option>
-                                <option value="">Monthly</option>
-                                <option value="">Yearly</option>
+                            <select name="filter_type" class="border form-select" id="filter-type">
+                                <option value="daily">Daily</option>
+                                <option value="monthly" selected>Monthly</option>
+                                <option value="yearly">Yearly</option>
                             </select>
-                            <div class="input-group">
-                                <input type="month" class="border form-control" id="month-picker" value="">
+                            <div class="input-group" style="min-width: 200px">
+                                <input type="date" class="border form-control" id="date-picker"
+                                    style="display: none;">
+                                <input type="month" class="border form-control" id="month-picker">
+                                <input type="number" class="border form-control" id="year-picker"
+                                    style="display: none;" min="2000" max="2099" step="1" value="2023">
                                 <div class="text-white input-group-text bg-primary border-primary">
                                     <i class="ri-calendar-2-line"></i>
                                 </div>
                             </div>
-                            <button id="filter-btn-occupancy-monthly" class="btn btn-primary ms-3"
+                            <button id="filter-btn-occupancy" class="btn btn-primary ms-3"
                                 type="button">Filter</button>
                         </div>
                     </div>
                 </form>
-                <form action="javascript:void(0);">
+                {{-- <form action="javascript:void(0);">
                     <div class="mb-0 row g-3 align-items-center">
                         <div class="col-sm-auto">
                             <div class="input-group">
@@ -34,10 +38,8 @@
                                 </div>
                             </div>
                         </div>
-                        <!--end col-->
                     </div>
-                    <!--end row-->
-                </form>
+                </form> --}}
             </div>
         </div>
         <div class="row">
@@ -75,40 +77,91 @@
 @push('body-script')
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            let monthInput = document.getElementById('filterMonth');
+            const filterType = document.getElementById('filter-type');
+            const datePicker = document.getElementById('date-picker');
+            const monthPicker = document.getElementById('month-picker');
+            const yearPicker = document.getElementById('year-picker');
+            const filterBtn = document.getElementById('filter-btn-occupancy');
 
             let today = new Date();
+            let currentDate = today.toISOString().split('T')[0];
             let currentMonth = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0');
+            let currentYear = today.getFullYear();
 
-            monthInput.value = currentMonth;
+            // Set default values
+            monthPicker.value = currentMonth;
+            datePicker.value = currentDate;
+            yearPicker.value = currentYear;
 
-            fetchDataMonthly(currentMonth);
-        });
+            // Show month picker by default
+            monthPicker.style.display = 'block';
 
-        document.getElementById('filterMonth').addEventListener('change', function() {
-            fetchDataMonthly(this.value);
-        });
+            filterType.addEventListener('change', function() {
+                const selectedFilter = this.value;
 
-        function fetchDataMonthly(selectedMonth) {
-            console.log('Fetching data for month:', selectedMonth);
+                datePicker.style.display = 'none';
+                monthPicker.style.display = 'none';
+                yearPicker.style.display = 'none';
 
-            fetch('/monitoring/occupancy-monthly?month=' + selectedMonth)
-                .then(response => response.json())
-                .then(data => {
-                    console.log('Data:', data);
-                    updateDashboardMonthly(data);
-                })
-                .catch(error => console.error('Error:', error));
-        }
-
-        function updateDashboardMonthly(data) {
-            data.occupancy_of_branch.forEach(branch => {
-                let counterElement = document.querySelector(`.counter-value[data-branch-id="${branch.id}"]`);
-
-                if (counterElement) {
-                    counterElement.textContent = branch.occupancy.percentage_occupied;
+                if (selectedFilter === 'daily') {
+                    datePicker.style.display = 'block';
+                } else if (selectedFilter === 'monthly') {
+                    monthPicker.style.display = 'block';
+                } else if (selectedFilter === 'yearly') {
+                    yearPicker.style.display = 'block';
                 }
             });
-        }
+
+            filterBtn.addEventListener('click', function() {
+                const selectedFilter = filterType.value;
+                let selectedValue;
+
+                if (selectedFilter === 'daily') {
+                    selectedValue = datePicker.value;
+                } else if (selectedFilter === 'monthly') {
+                    selectedValue = monthPicker.value;
+                } else if (selectedFilter === 'yearly') {
+                    selectedValue = yearPicker.value;
+                }
+
+                if (!selectedValue) {
+                    alert('Please select a date, month, or year.');
+                    return;
+                }
+
+                fetchData(selectedFilter, selectedValue);
+            });
+
+            function fetchData(filterType, selectedValue) {
+                let url = '/monitoring/occupancy-';
+
+                if (filterType === 'daily') {
+                    url += `daily?date=${selectedValue}`;
+                } else if (filterType === 'monthly') {
+                    url += `monthly?month=${selectedValue}`;
+                } else if (filterType === 'yearly') {
+                    url += `yearly?year=${selectedValue}`;
+                }
+
+                fetch(url)
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log('Data:', data);
+                        updateDashboard(data);
+                    })
+                    .catch(error => console.error('Error:', error));
+            }
+
+            function updateDashboard(data) {
+                data.occupancy_of_branch.forEach(branch => {
+                    let counterElement = document.querySelector(
+                        `.counter-value[data-branch-id="${branch.id}"]`);
+
+                    if (counterElement) {
+                        counterElement.textContent = branch.occupancy.percentage_occupied;
+                    }
+                });
+            }
+        });
     </script>
 @endpush

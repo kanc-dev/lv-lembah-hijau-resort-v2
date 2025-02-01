@@ -32,6 +32,7 @@ class MonitoringController extends Controller
         }
 
         $data['branch_list'] = Branch::all();
+        $data['event_booking'] = $this->_getUpcomingBookings($branchId);
 
         $data['page_title'] = 'Dashboard';
         // dd($data);
@@ -159,5 +160,22 @@ class MonitoringController extends Controller
             'categories' => $dates,
             'series' => $series
         ]);
+    }
+
+    private function _getUpcomingBookings($branchId = null)
+    {
+        $today = Carbon::now()->startOfDay();
+
+        $query = Booking::with(['event', 'originBranch', 'destinationBranch'])
+            ->where('tanggal_rencana_checkout', '>=', $today)
+            ->orderBy('tanggal_rencana_checkin', 'asc');
+
+        if ($branchId) {
+            $query->where('unit_origin_id', $branchId);
+        }
+
+        $bookings = $query->get();
+
+        return $bookings;
     }
 }
