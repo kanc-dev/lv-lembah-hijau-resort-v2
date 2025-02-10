@@ -81,8 +81,8 @@
                                 <tr>
                                     <th>Tanggal</th>
                                     <th>Unit</th>
-                                    {{-- <th>Total Kamar</th>
-                                    <th>Total Kamar Terisi</th> --}}
+                                    {{-- <th>Total Kamar</th> --}}
+                                    <th>Kamar Terisi</th>
                                     <th>Kamar Kosong</th>
                                     {{-- <th>Total Kapasitas</th> --}}
                                     <th>Bed Terisi</th>
@@ -94,8 +94,8 @@
                                     <tr>
                                         <td>{{ date('d, M Y', strtotime($summary['report_date'])) }}</td>
                                         <td>{{ $summary['branch'] }}</td>
-                                        {{-- <td>{{ $summary['total_kamar'] }}</td>
-                                        <td>{{ $summary['total_kamar_terisi'] }}</td> --}}
+                                        {{-- <td>{{ $summary['total_kamar'] }}</td> --}}
+                                        <td>{{ $summary['total_kamar_terisi'] }}</td>
                                         <td>{{ $summary['total_kamar_kosong'] }}</td>
                                         {{-- <td>{{ $summary['total_kapasitas'] }}</td> --}}
                                         <td>{{ $summary['total_bed_terisi'] }}</td>

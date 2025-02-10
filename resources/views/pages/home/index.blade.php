@@ -269,34 +269,22 @@
                     </div> <!-- end row-->
 
 
-                    <div class="row">
+                    {{-- <div class="row">
                         <div class="col-12">
                             <div class="card">
                                 <div class="border-0 card-header align-items-center d-flex">
                                     <h4 class="mb-0 card-title flex-grow-1">History Branch Occupancy</h4>
-                                    {{-- <div>
-                                        <button type="button" class="btn btn-soft-secondary btn-sm"
-                                            onclick="updateChart('daily')">Daily</button>
-                                        <button type="button" class="btn btn-soft-secondary btn-sm"
-                                            onclick="updateChart('1M')">1M</button>
-                                        <button type="button" class="btn btn-soft-secondary btn-sm"
-                                            onclick="updateChart('6M')">6M</button>
-                                        <button type="button" class="btn btn-soft-secondary btn-sm"
-                                            onclick="updateChart('1Y')">1Y</button>
-                                        <button type="button" class="btn btn-soft-secondary btn-sm"
-                                            onclick="updateChart('ALL')">ALL</button>
-                                    </div> --}}
-                                </div><!-- end card header -->
+                                </div>
 
                                 <div class="p-0 pb-2 card-body">
                                     <div>
                                         <x-history-branch-occupancy :branchId="$branchId" />
                                     </div>
-                                </div><!-- end card body -->
-                            </div><!-- end card -->
-                        </div><!-- end col -->
-
-                    </div><!-- end row -->
+                                </div>
+                            </div>
+                        </div>
+                    </div> --}}
+                    <x-widget-occupancy-grafik :data="$data" />
 
                     <div class="row">
                         <div class="col-xl-8">

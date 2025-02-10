@@ -71,7 +71,10 @@ class RoomController extends Controller
                     'kapasitas' => $room->kapasitas,
                     'terisi' => $activeCheckins->count(),
                     'sisa_bed' => $room->kapasitas - $activeCheckins->count(),
-                    'event' => $room->event->nama_kelas ?? 'N/A',
+                    'event' => $room->event->nama_kelas ?? null,
+                    'events' => $room->guestCheckins->map(function ($checkin) {
+                       return $checkin->guest->events ?? [];
+                    }),
                     'tamu' => $activeCheckins->map(function ($checkin) {
                         return [
                             'nama' => $checkin->guest->nama,

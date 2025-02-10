@@ -80,7 +80,15 @@
                                         <td>{{ $room['terisi'] }}</td>
                                         <td>{{ $room['sisa_bed'] ?? 0 }}</td>
                                         <td>{{ number_format(($room['terisi'] / $room['kapasitas']) * 100, 2) }}%</td>
-                                        <td>{{ $room['event'] ?? 'N/A' }}</td>
+                                        <td>
+                                            @if ($room['event'])
+                                                {{ $room['event'] }}
+                                            @elseif ($room['events']->flatten()->first())
+                                                {{ $room['events']->flatten()->first()->nama_kelas }}
+                                            @else
+                                                N/A
+                                            @endif
+                                        </td>
                                         <td>
                                             <div class="flex-wrap gap-1 d-flex">
                                                 @foreach ($room['tamu'] as $tamu)
