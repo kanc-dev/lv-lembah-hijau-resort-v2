@@ -79,12 +79,14 @@
                                         <td>
                                             <a href="{{ route('booking.edit', $booking->id) }}"
                                                 class="btn btn-warning">Edit</a>
-                                            <form action="{{ route('booking.destroy', $booking->id) }}" method="POST"
-                                                style="display:inline;">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="btn btn-danger">Delete</button>
-                                            </form>
+                                            @if (!auth()->user()->branch_id)
+                                                <form action="{{ route('booking.destroy', $booking->id) }}" method="POST"
+                                                    style="display:inline;">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="btn btn-danger">Delete</button>
+                                                </form>
+                                            @endif
                                         </td>
                                     </tr>
                                 @endforeach

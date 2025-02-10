@@ -77,6 +77,7 @@
                                                             <i class="align-bottom ri-pencil-fill me-2 text-muted"></i> Edit
                                                         </a>
                                                     </li>
+                                                    @if (!auth()->user()->branch_id)
                                                     <li>
                                                         <form action="{{ route('event.destroy', $event) }}" method="POST"
                                                             class="d-inline"
@@ -91,6 +92,7 @@
                                                             </button>
                                                         </form>
                                                     </li>
+                                                    @endif
                                                 </ul>
                                             </div>
                                         </td>

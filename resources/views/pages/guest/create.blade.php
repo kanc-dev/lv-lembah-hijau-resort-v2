@@ -95,8 +95,15 @@
                                     <div class="mb-3">
                                         <label for="kendaraan" class="form-label">Kendaraan <span
                                                 class="text-danger">*</span></label>
-                                        <input type="text" class="form-control @error('kendaraan') is-invalid @enderror"
-                                            id="kendaraan" name="kendaraan" value="{{ old('kendaraan') }}" required>
+                                        <select class="form-select @error('kendaraan') is-invalid @enderror" id="kendaraan"
+                                            name="kendaraan" required>
+                                            <option value="">Pilih Kendaraan</option>
+                                            <option value="Motor" {{ old('kendaraan') == 'Motor' ? 'selected' : '' }}>Motor</option>
+                                            <option value="Mobil" {{ old('kendaraan') == 'Mobil' ? 'selected' : '' }}>Mobil</option>
+                                            <option value="Kendaraan Umum" {{ old('kendaraan') == 'Kendaraan Umum' ? 'selected' : '' }}>Kendaraan Umum</option>
+                                        </select>
+                                        {{-- <input type="text" class="form-control @error('kendaraan') is-invalid @enderror"
+                                            id="kendaraan" name="kendaraan" value="{{ old('kendaraan') }}" required> --}}
                                         <div class="invalid-feedback">
                                             @error('kendaraan')
                                                 {{ $message }}

@@ -154,11 +154,14 @@
                                             @enderror"
                                                     required>
                                                     <option value="">--Pilih Kendaraan--</option>
-                                                    <option value="mobil"
-                                                        {{ old('kendaraan') == 'mobil' ? 'selected' : '' }}>Mobil
+                                                    <option value="Motor"
+                                                        {{ old('kendaraan') == 'Motor' ? 'selected' : '' }}>Motor
                                                     </option>
-                                                    <option value="motor"
-                                                        {{ old('kendaraan') == 'motor' ? 'selected' : '' }}>Motor
+                                                    <option value="Mobil"
+                                                        {{ old('kendaraan') == 'Mobil' ? 'selected' : '' }}>Mobil
+                                                    </option>
+                                                    <option value="Kendaraan Umum"
+                                                        {{ old('kendaraan') == 'Kendaraan Umum' ? 'selected' : '' }}>Kendaraan Umum
                                                     </option>
                                                 </select>
                                             </div>
