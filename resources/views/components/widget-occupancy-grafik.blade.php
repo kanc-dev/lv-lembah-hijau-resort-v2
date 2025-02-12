@@ -10,7 +10,7 @@
                         <div class="mb-0 row g-3 align-items-center">
                             <div class="gap-2 col-sm-auto d-flex align-items-center">
                                 <select name="branch_id" class="border form-select" id="branch_id">
-                                    <option value="">All</option>
+                                    <option value="">-- Semua Unit --</option>
                                     @foreach ($data['branch_list'] as $branch)
                                         <option value="{{ $branch->id }}">{{ $branch->name }}</option>
                                     @endforeach

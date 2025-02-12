@@ -43,6 +43,10 @@
                             <i data-feather="home" class="icon-dual"></i> <span data-key="t-dashboards">Dashboard</span>
                         </a>
                     </li>
+                @endif
+                @if (
+                    (Auth::check() && Auth::user()->roles->contains('id', 1)) ||
+                        (Auth::check() && Auth::user()->roles->contains('id', 2)))
                     <li class="nav-item">
                         <a class="nav-link menu-link {{ request()->is('monitoring*') ? 'active' : '' }}"
                             href="{{ url('/monitoring') }}">

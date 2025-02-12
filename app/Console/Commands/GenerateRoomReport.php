@@ -74,6 +74,8 @@ class GenerateRoomReport extends Command
                         'checkout' => $checkin->tanggal_checkout,
                     ];
                 })->values()->toJson(),
+                'total_tamu' => $activeCheckins->count(),
+                'total_tamu_checkin' => $activeCheckins->whereNotNull('tanggal_checkin')->count(),
                 'report_date' => now()->toDateString(),
                 'created_at' => now(),
                 'updated_at' => now(),

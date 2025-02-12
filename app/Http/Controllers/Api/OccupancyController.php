@@ -17,19 +17,83 @@ use Illuminate\Support\Facades\Log;
 
 class OccupancyController extends Controller
 {
+    private function _getRoomStatus($branchId)
+    {
+        $getRoomStatus = Room::with(['branch', 'event', 'guestCheckins.guest'])
+            ->when($branchId, function ($query, $branchId) {
+                return $query->where('branch_id', $branchId);
+            })
+            ->get()
+            ->map(function ($room) {
+                $pendingCheckins = $room->guestCheckins->filter(function ($checkin) {
+                    return !is_null($checkin->guest_id);
+                });
+                $activeCheckins = $room->guestCheckins->filter(function ($checkin) {
+                    return !is_null($checkin->tanggal_checkin);
+                });
+
+
+                return [
+                    'id' => $room->id,
+                    'branch_id' => $room->branch_id,
+                    'branch' => $room->branch->name ?? 'N/A',
+                    'nama' => $room->nama,
+                    'tipe' => $room->tipe,
+                    'status' => $room->status,
+                    'kapasitas' => $room->kapasitas,
+                    'terisi' => $activeCheckins->count(),
+                    'sisa_bed' => $room->kapasitas - $activeCheckins->count(),
+                    'event' => $room->event->nama_kelas ?? null,
+                    'events' => $room->guestCheckins->map(function ($checkin) {
+                       return $checkin->guest->events ?? [];
+                    }),
+                    'tamu' => $pendingCheckins->map(function ($checkin) {
+                        return [
+                            'nama' => $checkin->guest->nama,
+                            'checkin' => $checkin->tanggal_checkin,
+                            'checkout' => $checkin->tanggal_checkout,
+                        ];
+                    }),
+                    'total_tamu' => $pendingCheckins->count(),
+                    'total_tamu_checkin' => $activeCheckins->count(),
+                ];
+            });
+
+        return $getRoomStatus;
+    }
+
+    private function _getRoomStatusOccupancy($branchId)
+    {
+        $roomReports = $this->_getRoomStatus($branchId);
+
+        $totalRooms = $roomReports->count();
+        $totalOccupied = $roomReports->sum('terisi');
+        $totalCapacity = $roomReports->sum('kapasitas');
+        $totalEmpty = $totalCapacity - $totalOccupied;
+
+        $percentageOccupied = $totalCapacity > 0 ? ($totalOccupied / $totalCapacity) * 100 : 0;
+        $percentageEmpty = $totalCapacity > 0 ? ($totalEmpty / $totalCapacity) * 100 : 0;
+
+        $data = [
+            'total_rooms' => $totalRooms,
+            'total_occupied' => $totalOccupied,
+            'total_empty' => $totalEmpty,
+            'percentage_occupied' => $percentageOccupied,
+            'percentage_empty' => $percentageEmpty,
+        ];
+
+        return $data;
+    }
 
     public function getRoomEmptyOccupied(Request $request)
     {
-        // Ambil branch_id dari request
         $branchId = $request->input('branch_id');
 
-        // Dapatkan occupancy data menggunakan metode _getRoomOccupancy
-        $occupancyData = $this->_getRoomOccupancy($branchId);
+        $occupancyData = $this->_getRoomStatusOccupancy($branchId);
 
-        // Susun data hasil kalkulasi
         $data = [
-            'occupied' => round($occupancyData['occupied_percentage'], 2),
-            'empty' => round($occupancyData['empty_percentage'], 2),
+            'occupied' => round($occupancyData['percentage_occupied'], 2),
+            'empty' => round($occupancyData['percentage_empty'], 2),
         ];
 
         return response()->json([

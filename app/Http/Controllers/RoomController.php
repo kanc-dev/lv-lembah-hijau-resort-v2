@@ -82,11 +82,14 @@ class RoomController extends Controller
                             'checkout' => $checkin->tanggal_checkout,
                         ];
                     }),
+                    'total_tamu' => $activeCheckins->count(),
+                    'total_tamu_checkin' => $activeCheckins->whereNotNull('tanggal_checkin')->count(),
                 ];
             });
 
         $data['rooms'] = $getRoomStatus;
         $data['page_title'] = 'Status Kamar';
+
 
         return view('pages.room.status', compact('data'));
     }

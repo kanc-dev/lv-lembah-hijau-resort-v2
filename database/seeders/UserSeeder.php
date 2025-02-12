@@ -69,6 +69,7 @@ class UserSeeder extends Seeder
                     'name' => $userData['name'],
                     'password' => $userData['password'],
                     'branch_id' => $userData['branch_id'],
+                    'role_id' =>  $userData['branch_id']
                 ]
             );
 
