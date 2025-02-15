@@ -54,6 +54,12 @@
     {{-- @vite(['resources/sass/app.scss', 'resources/js/app.js']) --}}
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js'></script>
 
+    <style>
+        .hide-column {
+            display: none;
+        }
+    </style>
+
     @stack('styles')
     @stack('head-script')
 
@@ -63,6 +69,7 @@
 
     <!-- Begin page -->
     <div id="layout-wrapper">
+        @include('sweetalert::alert')
 
         @include('partials.header')
         <!-- ========== App Menu ========== -->

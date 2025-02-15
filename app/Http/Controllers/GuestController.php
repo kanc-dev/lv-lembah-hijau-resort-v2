@@ -12,26 +12,45 @@ use App\Models\Room;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use RealRashid\SweetAlert\Facades\Alert;
+
 
 class GuestController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
         $user = Auth::user();
-        $branchId = $user->branch_id; // Asumsi field branch_id ada di tabel users
+        $branchId = $user->branch_id ?? null;
+
+        $query = Guest::with('branch.rooms', 'events', 'guestcheckins.room');
 
         if ($branchId) {
-            $rooms = Room::with('branch')->where('branch_id', $branchId)->get();
-            $guests = Guest::with('branch.rooms', 'events', 'guestcheckins.room')->where('branch_id', $branchId)->get();
-        } else {
-            $rooms = Room::with('branch')->get();
-            $guests = Guest::with('branch.rooms', 'events', 'guestcheckins.room')->get();
+            $query->where('branch_id', $branchId);
         }
+
+        if ($request->has('nama') && $request->nama != '') {
+            $query->where('nama', 'like', '%' . $request->nama . '%');
+        }
+
+        if ($request->has('no_hp') && $request->no_hp != '') {
+            $query->where('no_hp', 'like', '%' . $request->no_hp . '%');
+        }
+
+        if ($request->has('email') && $request->email != '') {
+            $query->where('email', 'like', '%' . $request->email . '%');
+        }
+
+        if ($request->has('no_polisi') && $request->no_polisi != '') {
+            $query->where('no_polisi', 'like', '%' . $request->no_polisi . '%');
+        }
+
+        $guests = $query->paginate(10);
+
         $data['guests'] = $guests;
-        $data['rooms'] = $rooms;
+        $data['rooms'] = Room::getAvailable($branchId)->get();
         $data['page_title'] = 'Data Tamu';
 
         return view('pages.guest.index', compact('data'));
@@ -43,8 +62,7 @@ class GuestController extends Controller
     public function create()
     {
         $user = Auth::user();
-        $branchId = $user->branch_id; // Asumsi field branch_id ada di tabel users
-
+        $branchId = $user->branch_id;
         if ($branchId) {
             $branches = Branch::where('id', $branchId)->get();
             $events = Event::where('branch_id', $branchId)->get();
@@ -98,8 +116,8 @@ class GuestController extends Controller
 
         // Associate the guest with the event through the event_guest pivot table
         $guest->events()->attach($request->event_id);
-
-        return redirect()->route('guest.index')->with('success', 'Guest created successfully');
+        Alert::success('Success', 'Data Tamu Berhasil Ditambahkan');
+        return redirect()->route('guest.index');
     }
 
     /**
@@ -182,52 +200,29 @@ class GuestController extends Controller
 
         try {
             $guest = Guest::findOrFail($guestId);
-
             $room = Room::findOrFail($request->input('room_id'));
+            $jumlahTamuCheckin = GuestCheckin::where('room_id', $room->id)->count();
 
-            // Pastikan kamar tidak dalam status unavailable
             if ($room->status == 'unavailable') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Kamar tidak tersedia.',
-                ], 400);
+                Alert::error('Error', 'Kamar tidak tersedia.');
+                return redirect()->back();
             }
 
-            // Periksa apakah kapasitas kamar sudah penuh
-            if ($room->terisi >= $room->kapasitas) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Kamar sudah penuh.',
-                ], 400);
+            if ($jumlahTamuCheckin >= $room->kapasitas) {
+                Alert::error('Error', 'Kamar sudah penuh.');
+                return redirect()->back();
             }
 
-            // Tambah 1 tamu ke kolom terisi
-            $room->terisi += 1;
-
-            // Jika terisi == kapasitas, ubah status kamar menjadi 'unavailable'
-            if ($room->terisi == $room->kapasitas) {
-                $room->status = 'unavailable';
-            }
-
-            // Simpan perubahan pada kamar
-            $room->event_id = $guest->event_id;
-            $room->save();
-
-            // Simpan kamar yang dipilih ke guest_checkins
             GuestCheckin::updateOrCreate(
                 ['guest_id' => $guestId],
                 ['room_id' => $room->id]
             );
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Kamar berhasil dipilih untuk tamu.',
-            ]);
+            Alert::success('Berhasil!', 'Kamar berhasil dipilih untuk tamu.');
+        return redirect()->back();
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Terjadi kesalahan: ' . $e->getMessage(),
-            ], 500);
+            Alert::error('Error', 'Terjadi kesalahan: ' . $e->getMessage());
+            return redirect()->back();
         }
     }
 
@@ -238,19 +233,32 @@ class GuestController extends Controller
         ]);
 
         try {
-            $guest = Guest::findOrFail($guestId);
             $checkinDate = \Carbon\Carbon::parse($request->input('checkin_date'))->toDateString();
 
-            $checkin = GuestCheckin::updateOrCreate(
+            $guest = GuestCheckin::where('guest_id', $guestId)->first();
+
+            if (!$guest) {
+                Alert::error('Error', 'Harapkan memilih kamar terlebih dahulu untuk check-in.');
+                return redirect()->back();
+            }
+
+            if ($guest->tanggal_checkin) {
+                Alert::error('Error', 'Tamu sudah melakukan check-in.');
+                return redirect()->back();
+            }
+
+            GuestCheckin::updateOrCreate(
                 ['guest_id' => $guestId],
                 [
                     'tanggal_checkin' => $checkinDate,
                 ]
             );
 
-            return redirect()->back()->with('success', 'Check-in berhasil dilakukan.');
+            Alert::success('Success', 'Check-in berhasil dilakukan.');
+            return redirect()->back();
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+            Alert::error('Error', 'Terjadi kesalahan: ' . $e->getMessage());
+            return redirect()->back();
         }
     }
 
@@ -261,38 +269,34 @@ class GuestController extends Controller
         ]);
 
         try {
-            $guest = Guest::findOrFail($guestId);
             $checkinDate = \Carbon\Carbon::parse($request->input('checkout_date'))->toDateString();
 
-            // Temukan record check-in tamu
-            $checkin = GuestCheckin::where('guest_id', $guestId)->first();
+            $guest = GuestCheckin::where('guest_id', $guestId)->first();
 
-            if (!$checkin) {
-                return redirect()->back()->with('error', 'Tamu tidak ditemukan untuk check-out.');
+            if (!$guest) {
+                Alert::error('Error', 'Harapkan memilih kamar  dan check-in terlebih dahulu untuk check-out.');
+                return redirect()->back();
             }
 
-            // Ambil kamar yang digunakan tamu
-            $room = Room::findOrFail($checkin->room_id);
+            if (!$guest->tanggal_checkin) {
+                Alert::error('Error', 'Tamu belum melakukan check-in.');
+                return redirect()->back();
+            }
 
-            // Update tanggal check-out di GuestCheckin
-            $checkin->update([
+            if ($guest->tanggal_checkout) {
+                Alert::error('Error', 'Tamu sudah melakukan check-out.');
+                return redirect()->back();
+            }
+
+            $guest->update([
                 'tanggal_checkout' => $checkinDate,
             ]);
 
-            // Kurangi 1 dari kolom terisi
-            $room->terisi -= 1;
-
-            // Jika terisi < kapasitas, ubah status kamar menjadi 'available'
-            if ($room->terisi < $room->kapasitas) {
-                $room->status = 'available';
-            }
-
-            // Simpan perubahan pada kamar
-            $room->save();
-
-            return redirect()->back()->with('success', 'Check-out berhasil dilakukan. Kapasitas kamar diperbarui.');
+            Alert::success('Success', 'Check-out berhasil dilakukan. Kapasitas kamar diperbarui.');
+            return redirect()->back();
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+            Alert::error('Error', 'Terjadi kesalahan: ' . $e->getMessage());
+            return redirect()->back();
         }
     }
 

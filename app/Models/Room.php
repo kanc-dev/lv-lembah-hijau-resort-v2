@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\DB;
 
 class Room extends Model
@@ -23,16 +24,6 @@ class Room extends Model
         return $this->belongsTo(Event::class);
     }
 
-    public function guests()
-    {
-        return $this->hasMany(Guest::class, 'room_id');
-    }
-
-    public function guestCheckins()
-    {
-        return $this->hasMany(GuestCheckin::class, 'room_id');
-    }
-
     public function events()
     {
         return $this->hasManyThrough(
@@ -47,6 +38,73 @@ class Room extends Model
             ->select('events.*');
     }
 
+    public function guests()
+    {
+        return $this->hasMany(Guest::class, 'room_id');
+    }
+
+    public function guestCheckins(): HasMany
+    {
+        return $this->hasMany(GuestCheckin::class, 'room_id');
+    }
+
+    public function getSisaBedAttribute()
+    {
+        return $this->kapasitas - $this->guestCheckins()->count();
+    }
+
+    public function getIsAvailableAttribute()
+    {
+        return $this->getSisaBedAttribute() > 0 && $this->status === 'available';
+    }
+
+    public static function getAvailable($branchId = null)
+    {
+        $query = self::with('branch')
+        ->select('rooms.*')
+        ->selectRaw('(rooms.kapasitas - (SELECT COUNT(*) FROM guest_checkins WHERE guest_checkins.room_id = rooms.id)) as sisa_bed')
+        ->where('status', 'available')
+        ->whereRaw('(rooms.kapasitas - (SELECT COUNT(*) FROM guest_checkins WHERE guest_checkins.room_id = rooms.id)) > 0');
+
+        if ($branchId) {
+            $query->where('branch_id', $branchId);
+        }
+
+        return $query;
+    }
+
+    public function scopeAvailable($query)
+    {
+        return $query->withCount('guestCheckins')
+            ->where('status', 'available')
+            ->whereRaw('kapasitas > guest_checkins_count');
+    }
+
+    public static function getAvailableRooms($branchId = null, $per_page = null)
+    {
+        $query = self::withCount('guestCheckins')
+        ->where('status', 'available');
+
+        if ($branchId) {
+            $query->where('branch_id', $branchId);
+        }
+
+        if ($per_page) {
+            $query->paginate($per_page);
+        } else {
+            $query->get();
+        }
+
+        $rooms = $query->map(function ($room) {
+            $room->sisa_kamar = $room->kapasitas - $room->guest_checkins_count;
+            return $room;
+        })
+        ->filter(function ($room) {
+            return $room->sisa_kamar > 0 && $room->status === 'available';
+        });
+
+        return $rooms;
+    }
 
     public function getRoomStatus($branchId = null)
     {
@@ -77,4 +135,9 @@ class Room extends Model
 
         return $query->get();
     }
+
+
+
+
+
 }

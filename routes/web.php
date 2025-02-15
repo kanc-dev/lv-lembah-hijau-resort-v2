@@ -61,7 +61,7 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/guest', [GuestController::class, 'index'])->name('guest.index');
         Route::resource('guest', GuestController::class);
-        Route::post('/guest/plot-room/{guestId}', [GuestController::class, 'plotRoom'])->name('guest.plotRoom');
+        Route::post('/guest/{id}/plot-room', [GuestController::class, 'plotRoom'])->name('guest.plot-room.store');
         Route::post('/guest/checkin/{guestId}', [GuestController::class, 'setCheckinDate'])->name('guest.checkin');
         Route::post('/guest/checkout/{guestId}', [GuestController::class, 'setCheckoutDate'])->name('guest.checkout');
 

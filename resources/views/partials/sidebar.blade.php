@@ -62,52 +62,49 @@
                     <li class="nav-item">
                         <a class="nav-link menu-link {{ request()->is('booking*') ? 'active' : '' }}"
                             href="{{ route('booking.index') }}">
-                            <i data-feather="calendar" class="icon-dual"></i> <span data-key="t-widgets">Booking</span>
+                            <i data-feather="calendar" class="icon-dual"></i> <span data-key="t-widgets">Reservasi</span>
                         </a>
                     </li>
 
                     <li class="nav-item">
                         <a class="nav-link menu-link {{ request()->is('guest*') ? 'active' : '' }}"
                             href="{{ route('guest.index') }}">
-                            <i data-feather="users" class="icon-dual"></i> <span data-key="t-widgets">Guest</span>
+                            <i data-feather="users" class="icon-dual"></i> <span data-key="t-widgets">Tamu</span>
                         </a>
                     </li>
 
                     <li class="nav-item">
                         <a class="nav-link menu-link {{ request()->is('event*') ? 'active' : '' }}"
                             href="{{ route('event.index') }}">
-                            <i data-feather="book" class="icon-dual"></i> <span data-key="t-widgets">Class /
-                                Education</span>
+                            <i data-feather="book" class="icon-dual"></i> <span data-key="t-widgets">Kelas / Pendidikan</span>
                         </a>
                     </li>
 
                     <li class="nav-item">
                         <a class="nav-link menu-link {{ request()->is('room*') ? 'active' : '' }}"
                             href="{{ route('room.index') }}">
-                            <i data-feather="key" class="icon-dual"></i> <span data-key="t-widgets">Room</span>
+                            <i data-feather="key" class="icon-dual"></i> <span data-key="t-widgets">Kamar</span>
                         </a>
                     </li>
 
                     <li class="nav-item">
                         <a class="nav-link menu-link {{ request()->is('status-room*') ? 'active' : '' }}"
                             href="{{ route('status.room') }}">
-                            <i data-feather="bar-chart-2" class="icon-dual"></i> <span data-key="t-widgets">Room
-                                Status</span>
+                            <i data-feather="bar-chart-2" class="icon-dual"></i> <span data-key="t-widgets">Status Kamar</span>
                         </a>
                     </li>
 
                     <li class="nav-item">
                         <a class="nav-link menu-link {{ request()->is('report-room*') ? 'active' : '' }}"
                             href="{{ route('report.room') }}">
-                            <i data-feather="file-text" class="icon-dual"></i> <span data-key="t-widgets">Room
-                                Report</span>
+                            <i data-feather="file-text" class="icon-dual"></i> <span data-key="t-widgets">Laporan Kamar</span>
                         </a>
                     </li>
                 @endif
 
 
 
-                @if (Auth::check() && Auth::user()->roles->contains('id', 1))
+                @if (Auth::check() && Auth::user()->roles->contains('id', 99))
                     <li class="menu-title"><span data-key="t-menu">Administator</span></li>
                     <li class="nav-item">
                         <a class="nav-link menu-link {{ request()->is('user*') ? 'active' : '' }}"

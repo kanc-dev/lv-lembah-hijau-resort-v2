@@ -20,9 +20,9 @@
             <div class="col-lg-12">
                 <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0 card-title">Guests Data</h5>
+                        <h5 class="mb-0 card-title">Data Tamu</h5>
                         <a href="{{ route('guest.create') }}" class="btn btn-primary">
-                            <i class="ri-add-fill"></i> <span>Add New Guest</span>
+                            <i class="ri-add-fill"></i> <span>Tambah Tamu</span>
                         </a>
                     </div>
                     <div class="card-body">
@@ -32,192 +32,174 @@
                             </div>
                         @endif
 
-                        <div class="mb-3">
-                            <button id="bulkPlotRoom" class="btn btn-warning btn-sm" data-bs-toggle="modal"
+                        <form action="{{ route('guest.index') }}" method="GET">
+                            <div class="row g-2">
+                                <div class="col-md-3">
+                                    <input type="text" name="nama" class="form-control" placeholder="Cari Nama..." value="{{ request('nama') }}">
+                                </div>
+                                <div class="col-md-9">
+                                    <div class="row g-2">
+                                        <div class="col-md-3">
+                                            <input type="text" name="no_hp" class="form-control" placeholder="Cari Telepon..." value="{{ request('no_hp') }}">
+                                        </div>
+                                        <div class="col-md-3">
+                                            <input type="text" name="email" class="form-control" placeholder="Cari Email..." value="{{ request('email') }}">
+                                        </div>
+                                        <div class="col-md-3">
+                                            <input type="text" name="no_polisi" class="form-control" placeholder="Cari Plat No..." value="{{ request('no_polisi') }}">
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="gap-2 d-flex justify-content-end">
+                                                <button type="submit" class="btn w-100 btn-primary">Cari</button>
+                                                <a href="{{ route('guest.index') }}" class="btn w-100 btn-secondary">Reset</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+
+                        {{-- <form action="" method="POST" id="bulkActionForm" class="mt-3">
+                            @csrf
+                            <div class="g-2 row">
+                                <div class="w-full col-3 col-md-2">
+                                    <select name="bulk_action" class="form-select form-select-sm">
+                                        <option value="">Pilih Aksi</option>
+                                        <option value="delete">Plot Kamar</option>
+                                        <option value="checkin">Check In</option>
+                                        <option value="checkout">Check Out</option>
+                                    </select>
+                                </div>
+                                <div class="col-2">
+                                    <button type="submit" class="btn-sm btn btn-primary">Terapkan</button>
+                                </div>
+                            </div>
+                        </form> --}}
+
+
+
+                        <div class="mt-3">
+                            <button id="bulkPlotRoom" class="btn btn-info btn-sm" data-bs-toggle="modal"
                                 data-bs-target="#bulkPlotRoomModal" disabled>Bulk Plot Kamar</button>
                             <button id="bulkCheckin" class="btn btn-success btn-sm" disabled>Bulk Check-in</button>
-                            <button id="bulkCheckout" class="btn btn-danger btn-sm" disabled>Bulk Check-out</button>
+                            <button id="bulkCheckout" class="btn btn-soft-dark btn-sm" disabled>Bulk Check-out</button>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead>
+                                    <tr>
+                                        <th><input type="checkbox" id="checkAll"></th>
+                                        <th>ID</th>
+                                        <th>Nama</th>
+                                        <th>Kamar</th>
+                                        <th>Check (In/Out)</th>
+                                        <th>Unit</th>
+                                        <th>Kelas / Pendidikan</th>
+                                        <th>Batch</th>
+                                        <th class="hide-column">Telepon</th>
+                                        <th class="hide-column">Email</th>
+                                        <th class="hide-column">Jenis Kelamin</th>
+                                        <th class="hide-column">Kendaraan</th>
+                                        <th class="hide-column">Plat No</th>
+                                        <th class="hide-column">Rencana Check-in</th>
+                                        <th class="hide-column">Rencana Check-out</th>
+                                        <th>Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($data['guests'] as $guest)
+                                        <tr>
+                                            <td><input type="checkbox" class="guest-checkbox" name="guest_ids[]" value="{{ $guest->id }}"></td>
+                                            <td>{{ $loop->iteration }}</td>
+                                            <td class="text-nowrap">{{ $guest->nama }}</td>
+                                            <td>
+                                                @if ($guest->guestcheckins->first())
+                                                    <span class="badge bg-warning">{{ $guest->guestcheckins->first()->room->nama }}</span>
+                                                @else
+                                                    <span class="badge bg-warning">N/A</span>
+                                                @endif
+                                            </td>
+                                            <td>
+                                                <span>
+                                                    @if ($guest->guestcheckins->isNotEmpty())
+                                                        @if ($guest->guestcheckins->first()->tanggal_checkin)
+                                                            <span class="badge bg-success">{{ date('d, M Y', strtotime($guest->guestcheckins->first()->tanggal_checkin)) }}</span>
+                                                        @else
+                                                            N/A
+                                                        @endif
+                                                    @else
+                                                        N/A
+                                                    @endif
+                                                </span>
+                                                /
+                                                <span>
+                                                    @if ($guest->guestcheckins->isNotEmpty())
+                                                        @if ($guest->guestcheckins->first()->tanggal_checkout)
+                                                            <span class="badge bg-danger">{{ date('d, M Y', strtotime($guest->guestcheckins->first()->tanggal_checkout)) }}</span>
+                                                        @else
+                                                            N/A
+                                                        @endif
+                                                    @else
+                                                        N/A
+                                                    @endif
+                                                </span>
+                                            </td>
+                                            <td>{{ $guest->branch->name }}</td>
+                                            <td>
+                                                @if ($guest->events)
+                                                    @foreach ($guest->events as $event)
+                                                        {{ $event->nama_kelas }}
+                                                    @endforeach
+                                                @else
+                                                    'N/A'
+                                                @endif
+                                            </td>
+                                            <td>{{ $guest->batch }}</td>
+                                            <td class="hide-column">{{ $guest->no_hp }}</td>
+                                            <td class="hide-column">{{ $guest->email }}</td>
+                                            <td class="hide-column">{{ $guest->jenis_kelamin }}</td>
+                                            <td class="hide-column">{{ $guest->kendaraan }}</td>
+                                            <td class="hide-column">{{ $guest->no_polisi }}</td>
+                                            <td class="hide-column">{{ date('d, M Y', strtotime($guest->tanggal_rencana_checkin)) }}</td>
+                                            <td class="hide-column">{{ date('d, M Y', strtotime($guest->tanggal_rencana_checkout)) }}</td>
+                                            <td>
+                                                <div class="flex-wrap gap-1 d-flex">
+                                                    <div>
+                                                        <button class="text-nowrap btn btn-info btn-sm" data-bs-toggle="modal"
+                                                            data-bs-target="#plotRoomModal{{ $guest->id }}" title="Plot Kamar">
+                                                            <i class="ri-hotel-bed-line"></i>
+                                                        </button>
+                                                        @include('partials.modal-plot-room', ['guest' => $guest, 'rooms' => $data['rooms']])
+                                                    </div>
+                                                    <form action="{{ route('guest.checkin', $guest->id) }}" method="POST" class="d-inline">
+                                                        @csrf
+                                                        <input type="hidden" name="checkin_date" value="{{ date('Y-m-d') }}">
+                                                        <button type="submit" class="text-nowarp btn btn-success btn-sm" title="Check In"><i class="ri-calendar-check-line"></i></button>
+                                                    </form>
+                                                    <form action="{{ route('guest.checkout', $guest->id) }}" method="POST" class="d-inline">
+                                                        @csrf
+                                                        <input type="hidden" name="checkout_date" value="{{ date('Y-m-d') }}">
+                                                        <button type="submit" class="btn text-nowarp btn-soft-dark btn-sm" title="Check Out"><i class=" ri-calendar-check-fill"></i></button>
+                                                    </form>
+                                                    <div>
+                                                        <a href="{{ route('guest.edit', $guest) }}" class="btn btn-warning btn-sm" title="Edit"><i class="ri-edit-box-line"></i></a>
+                                                    </div>
+                                                    @if (!auth()->user()->branch_id)
+                                                        <form action="{{ route('guest.destroy', $guest) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this guest?');">
+                                                            @csrf
+                                                            @method('DELETE')
+                                                            <button type="submit" class="btn btn-danger btn-sm" title="Delete"><i class="ri-delete-bin-line"></i></button>
+                                                        </form>
+                                                    @endif
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
                         </div>
 
-                        <table id="scroll-horizontal" class="table align-middle nowrap table-striped" style="width:100%">
-                            <thead>
-                                <tr>
-                                    <th scope="col" style="width: 10px;">
-                                        <div class="form-check">
-                                            <input class="form-check-input fs-15" type="checkbox" id="checkAll"
-                                                value="option">
-                                        </div>
-                                    </th>
-                                    <th>ID</th>
-                                    <th>Nama</th>
-                                    <th>Kamar</th>
-                                    <th>Check-in</th>
-                                    <th>Check-out</th>
-                                    <th>Unit</th>
-                                    <th>Kelas / Pendidikan</th>
-                                    <th>Batch</th>
-                                    <th>Telepon</th>
-                                    <th>Email</th>
-                                    <th>Jenis Kelamin</th>
-                                    <th>Kendaraan</th>
-                                    <th>Plat No</th>
-                                    <th>Rencana Check-in</th>
-                                    <th>Rencana Check-out</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach ($data['guests'] as $guest)
-                                    <tr>
-                                        <th scope="row">
-                                            <div class="form-check">
-                                                <input class="form-check-input fs-15 guest-checkbox" type="checkbox"
-                                                    name="checkAll" value="{{ $guest->id }}">
-                                            </div>
-                                        </th>
-                                        <td>{{ $loop->iteration }}</td>
-                                        <td>{{ $guest->nama }}</td>
-                                        <td>
-                                            {{-- @if ($guest->guestcheckins->isNotEmpty())
-                                            @else --}}
-                                            @if ($guest->guestcheckins->first())
-                                                <span
-                                                    class="badge bg-warning">{{ $guest->guestcheckins->first()->room->nama }}</span>
-                                            @else
-                                                <span class="badge bg-warning">N/A</span>
-                                            @endif
-                                            {{-- -
-                                            <button class="btn btn-warning btn-sm" data-bs-toggle="modal"
-                                                data-bs-target="#plotRoomModal{{ $guest->id }}">
-                                                Plot Kamar
-                                            </button>
-
-                                            <div class="modal fade" id="plotRoomModal{{ $guest->id }}" tabindex="-1"
-                                                aria-labelledby="plotRoomModalLabel" aria-hidden="true">
-                                                <div class="modal-dialog modal-lg">
-                                                    <div class="modal-content">
-                                                        <div class="modal-header">
-                                                            <h5 class="modal-title" id="plotRoomModalLabel">Pilih Kamar
-                                                                untuk Tamu: {{ $guest->nama }}</h5>
-                                                            <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                                                aria-label="Close"></button>
-                                                        </div>
-                                                        <div class="modal-body">
-                                                            <div class="table-responsive">
-                                                                <table id="roomsTable"
-                                                                    class="table text-center align-middle table-sm table-striped table-hover table-bordered">
-                                                                    <thead class="table-light">
-                                                                        <tr>
-                                                                            <th>No</th>
-                                                                            <th>Nama Kamar</th>
-                                                                            <th>Kapasitas</th>
-                                                                            <th>Aksi</th>
-                                                                        </tr>
-                                                                    </thead>
-                                                                    <tbody>
-                                                                        @foreach ($data['rooms'] as $index => $room)
-                                                                            @if ($guest->branch_id == $room->branch_id)
-                                                                                <tr>
-                                                                                    <td>{{ $index + 1 }}</td>
-                                                                                    <td>{{ $room->nama }}</td>
-                                                                                    <td>{{ $room->kapasitas }}</td>
-                                                                                    <td>
-                                                                                        <button
-                                                                                            class="btn btn-sm btn-success select-room-btn"
-                                                                                            data-room-id="{{ $room->id }}"
-                                                                                            data-guest-id="{{ $guest->id }}"
-                                                                                            @if ($room->terisi >= $room->kapasitas) disabled @endif>
-                                                                                            {{ $room->terisi >= $room->kapasitas ? 'Penuh' : 'Pilih' }}
-                                                                                        </button>
-                                                                                    </td>
-                                                                                </tr>
-                                                                            @endif
-                                                                        @endforeach
-                                                                    </tbody>
-                                                                </table>
-                                                            </div>
-
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div> --}}
-                                            {{-- @endif --}}
-                                        </td>
-                                        <td id="checkin_date_display{{ $guest->id }}">
-                                            @if ($guest->guestcheckins->isNotEmpty() && $guest->guestcheckins->first()->room_id)
-                                                @if ($guest->guestcheckins->isNotEmpty() && $guest->guestcheckins->first()->tanggal_checkin)
-                                                    <span class="badge bg-success">
-                                                        {{ date('d, M Y', strtotime($guest->guestcheckins->first()->tanggal_checkin)) }}
-                                                    </span>
-                                                @else
-                                                    <form action="{{ route('guest.checkin', $guest->id) }}" method="POST"
-                                                        class="d-inline">
-                                                        @csrf
-                                                        <input type="hidden" name="checkin_date"
-                                                            value="{{ date('Y-m-d') }}">
-                                                        <button type="submit" class="btn btn-info btn-sm">Check In</button>
-                                                    </form>
-                                                @endif
-                                            @endif
-                                        </td>
-                                        <td id="checkout_date_display{{ $guest->id }}">
-                                            @if ($guest->guestcheckins->isNotEmpty() && $guest->guestcheckins->first()->tanggal_checkin)
-                                                @if ($guest->guestcheckins->isNotEmpty() && $guest->guestcheckins->first()->tanggal_checkout)
-                                                    <span class="badge bg-danger">
-                                                        {{ date('d, M Y', strtotime($guest->guestcheckins->first()->tanggal_checkout)) }}
-
-                                                    </span>
-                                                @else
-                                                    <form action="{{ route('guest.checkout', $guest->id) }}" method="POST"
-                                                        class="d-inline">
-                                                        @csrf
-                                                        <input type="hidden" name="checkout_date"
-                                                            value="{{ date('Y-m-d') }}">
-                                                        <button type="submit" class="btn btn-info btn-sm">Check
-                                                            Out</button>
-                                                    </form>
-                                                @endif
-                                            @endif
-                                        </td>
-                                        <td>{{ $guest->branch->name }}</td>
-                                        <td>
-                                            @if ($guest->events)
-                                                @foreach ($guest->events as $event)
-                                                    {{ $event->nama_kelas }}
-                                                @endforeach
-                                            @else
-                                                'N/A'
-                                            @endif
-                                        </td>
-                                        <td>{{ $guest->batch }}</td>
-                                        <td>{{ $guest->no_hp }}</td>
-                                        <td>{{ $guest->email }}</td>
-                                        <td>{{ $guest->jenis_kelamin }}</td>
-                                        <td>{{ $guest->kendaraan }}</td>
-                                        <td>{{ $guest->no_polisi }}</td>
-                                        <td>{{ date('d, M Y', strtotime($guest->tanggal_rencana_checkin)) }}</td>
-                                        <td>{{ date('d, M Y', strtotime($guest->tanggal_rencana_checkout)) }}</td>
-
-                                        <td>
-                                            <a href="{{ route('guest.edit', $guest) }}"
-                                                class="btn btn-warning btn-sm">Edit</a>
-                                                @if (!auth()->user()->branch_id)
-                                            <form action="{{ route('guest.destroy', $guest) }}" method="POST"
-                                                class="d-inline"
-                                                onsubmit="return confirm('Are you sure you want to delete this guest?');">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="btn btn-danger btn-sm">Delete</button>
-                                            </form>
-                                            @endif
-                                        </td>
-
-                                    </tr>
-
-                                    <!-- Default Modals -->
-                                @endforeach
-                            </tbody>
-                        </table>
+                        {{ $data['guests']->links() }}
                     </div>
                 </div>
             </div>
@@ -273,6 +255,14 @@
     <script>
         $(document).ready(function() {
             $('#roomsTable').DataTable({
+                responsive: true, // Membuat tabel responsif pada ukuran layar kecil
+                paging: true, // Mengaktifkan pagination
+                searching: true, // Mengaktifkan fitur pencarian
+                ordering: true, // Mengaktifkan fitur pengurutan
+                info: true, // Menampilkan informasi jumlah data
+                autoWidth: false // Menonaktifkan pengaturan lebar otomatis
+            });
+            $('#roomsTableModal').DataTable({
                 responsive: true, // Membuat tabel responsif pada ukuran layar kecil
                 paging: true, // Mengaktifkan pagination
                 searching: true, // Mengaktifkan fitur pencarian
