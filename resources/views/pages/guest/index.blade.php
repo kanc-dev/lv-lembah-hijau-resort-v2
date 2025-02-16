@@ -39,19 +39,19 @@
                                 </div>
                                 <div class="col-md-9">
                                     <div class="row g-2">
-                                        <div class="col-md-3">
+                                        <div class="col-md-4">
                                             <input type="text" name="no_hp" class="form-control" placeholder="Cari Telepon..." value="{{ request('no_hp') }}">
                                         </div>
-                                        <div class="col-md-3">
+                                        <div class="col-md-4">
                                             <input type="text" name="email" class="form-control" placeholder="Cari Email..." value="{{ request('email') }}">
                                         </div>
-                                        <div class="col-md-3">
+                                        <div class="col-md-2">
                                             <input type="text" name="no_polisi" class="form-control" placeholder="Cari Plat No..." value="{{ request('no_polisi') }}">
                                         </div>
-                                        <div class="col-md-3">
+                                        <div class="col-md-2">
                                             <div class="gap-2 d-flex justify-content-end">
-                                                <button type="submit" class="btn w-100 btn-primary">Cari</button>
-                                                <a href="{{ route('guest.index') }}" class="btn w-100 btn-secondary">Reset</a>
+                                                <button type="submit" class="btn w-100 btn-primary"><i class="ri-search-line"></i></button>
+                                                <a href="{{ route('guest.index') }}" class="btn w-100 btn-danger"><i class="ri-refresh-line"></i></a>
                                             </div>
                                         </div>
                                     </div>
@@ -82,14 +82,14 @@
                             <button id="bulkPlotRoom" class="btn btn-info btn-sm" data-bs-toggle="modal"
                                 data-bs-target="#bulkPlotRoomModal" disabled>Bulk Plot Kamar</button>
                             <button id="bulkCheckin" class="btn btn-success btn-sm" disabled>Bulk Check-in</button>
-                            <button id="bulkCheckout" class="btn btn-soft-dark btn-sm" disabled>Bulk Check-out</button>
+                            <button id="bulkCheckout" class="btn btn-soft-danger btn-sm" disabled>Bulk Check-out</button>
                         </div>
                         <div class="table-responsive">
                             <table class="table table-striped table-hover">
                                 <thead>
                                     <tr>
                                         <th><input type="checkbox" id="checkAll"></th>
-                                        <th>ID</th>
+                                        {{-- <th>ID</th> --}}
                                         <th>Nama</th>
                                         <th>Kamar</th>
                                         <th>Check (In/Out)</th>
@@ -107,16 +107,21 @@
                                     </tr>
                                 </thead>
                                 <tbody>
+                                    @if ($data['guests']->isEmpty())
+                                        <tr>
+                                            <td colspan="16" class="text-center">Tidak ada data tamu</td>
+                                        </tr>
+                                    @endif
                                     @foreach ($data['guests'] as $guest)
                                         <tr>
                                             <td><input type="checkbox" class="guest-checkbox" name="guest_ids[]" value="{{ $guest->id }}"></td>
-                                            <td>{{ $loop->iteration }}</td>
+                                            {{-- <td>{{ $loop->iteration }}</td> --}}
                                             <td class="text-nowrap">{{ $guest->nama }}</td>
                                             <td>
                                                 @if ($guest->guestcheckins->first())
-                                                    <span class="badge bg-warning">{{ $guest->guestcheckins->first()->room->nama }}</span>
+                                                    <span class="badge bg-soft-info text-dark ">{{ $guest->guestcheckins->first()->room->nama }}</span>
                                                 @else
-                                                    <span class="badge bg-warning">N/A</span>
+                                                    <span class="badge bg-soft-info text-dark">N/A</span>
                                                 @endif
                                             </td>
                                             <td>

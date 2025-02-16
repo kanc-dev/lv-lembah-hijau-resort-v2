@@ -52,6 +52,7 @@ class GuestController extends Controller
         $data['guests'] = $guests;
         $data['rooms'] = Room::getAvailable($branchId)->get();
         $data['page_title'] = 'Data Tamu';
+        // dd($data);
 
         return view('pages.guest.index', compact('data'));
     }
@@ -203,10 +204,16 @@ class GuestController extends Controller
             $room = Room::findOrFail($request->input('room_id'));
             $jumlahTamuCheckin = GuestCheckin::where('room_id', $room->id)->count();
 
+            if ($room->branch_id != $guest->branch_id) {
+                Alert::error('Error', 'unit Kamar tidak sesuai dengan data tamu.');
+                return redirect()->back();
+            }
+
             if ($room->status == 'unavailable') {
                 Alert::error('Error', 'Kamar tidak tersedia.');
                 return redirect()->back();
             }
+
 
             if ($jumlahTamuCheckin >= $room->kapasitas) {
                 Alert::error('Error', 'Kamar sudah penuh.');

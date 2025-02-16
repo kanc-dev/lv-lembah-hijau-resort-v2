@@ -16,7 +16,7 @@ return new class extends Migration
             $table->unsignedBigInteger('event_id');
             $table->integer('jumlah_peserta');
             $table->json('rooms')->nullable();
-            $table->unsignedBigInteger('unit_origin_id');  // Menyimpan unit asal yang merujuk pada branch
+            $table->unsignedBigInteger('unit_origin_id');
             $table->unsignedBigInteger('unit_destination_id');
             $table->date('tanggal_rencana_checkin');
             $table->date('tanggal_rencana_checkout');

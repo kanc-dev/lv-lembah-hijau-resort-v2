@@ -7,28 +7,39 @@ use App\Http\Requests\StoreBookingRequest;
 use App\Http\Requests\UpdateBookingRequest;
 use App\Models\Branch;
 use App\Models\Event;
+use App\Models\EventPlotingRoom;
 use App\Models\Room;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use RealRashid\SweetAlert\Facades\Alert;
 
 class BookingController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
         $user = Auth::user();
         $branchId = $user->branch_id;
 
+        $query = Booking::with(['event', 'originBranch', 'destinationBranch', 'eventPlotingRooms.room']);
+
+
         if ($branchId) {
-            $bookings = Booking::with(['event', 'originBranch', 'destinationBranch'])->where('unit_origin_id', $branchId)->get();
-        } else {
-            $bookings = Booking::with(['event', 'originBranch', 'destinationBranch'])->get();
+            $query->where('unit_origin_id', $branchId);
         }
 
+        if ($request->has('nama_kelas') && !empty($request->nama_kelas)) {
+            $query->whereHas('event', function ($q) use ($request) {
+                $q->where('nama_kelas', 'like', '%' . $request->nama_kelas . '%');
+            });
+        }
+
+        $bookings = $query->paginate(10);
+
         $data['bookings'] = $bookings;
-        $data['page_title'] = 'Data Booking';
+        $data['page_title'] = 'Data Reservasi';
         return view('pages.booking.index', compact('data'));
     }
 
@@ -39,7 +50,7 @@ class BookingController extends Controller
     {
 
         $user = Auth::user();
-        $branchId = $user->branch_id; // Asumsi field branch_id ada di tabel users
+        $branchId = $user->branch_id;
 
         if ($branchId) {
             $branches = Branch::where('id', $branchId)->get();
@@ -55,7 +66,7 @@ class BookingController extends Controller
         $data['events'] = $events;
         $data['branches'] = $branches;
         $data['branch_destination'] = Branch::all();
-        $data['page_title'] = 'Tambah Booking';
+        $data['page_title'] = 'Tambah Reservasi';
         return view('pages.booking.create', compact('data'));
     }
 
@@ -76,7 +87,8 @@ class BookingController extends Controller
         ]);
 
         Booking::create($request->all());
-        return redirect()->route('booking.index')->with('success', 'Booking created successfully.');
+        Alert::success('Success', 'Reservasi berhasil dibuat.');
+        return redirect()->route('booking.index');
     }
 
     /**
@@ -131,7 +143,8 @@ class BookingController extends Controller
         // Save the changes
         $booking->save();
 
-        return redirect()->route('booking.index')->with('success', 'Booking updated successfully.');
+        Alert::success('Success', 'Reservasi berhasil diperbarui.');
+        return redirect()->route('booking.index');
     }
 
 
@@ -141,6 +154,67 @@ class BookingController extends Controller
     public function destroy(Booking $booking)
     {
         $booking->delete();
-        return redirect()->route('booking.index')->with('success', 'Booking deleted successfully.');
+        Alert::success('Success', 'Reservasi berhasil dihapus.');
+        return redirect()->route('booking.index');
+    }
+
+    public function plotRooms($id) {
+        $booking = Booking::with('eventPlotingRooms')->findOrFail($id);
+
+        // Ambil tanggal booking saat ini
+        $checkin = $booking->tanggal_rencana_checkin;
+        $checkout = $booking->tanggal_rencana_checkout;
+
+        // Ambil ID kamar yang sudah dipilih untuk booking ini
+        $selectedRoomIds = $booking->eventPlotingRooms->pluck('room_id')->toArray();
+
+        // Ambil kamar yang tersedia (tidak bentrok dengan booking lain) **kecuali kamar yang sudah dipilih**
+        $rooms = Room::where('branch_id', $booking->unit_destination_id)
+            ->where(function ($query) use ($checkin, $checkout, $selectedRoomIds) {
+                $query->whereDoesntHave('eventPlotingRooms', function ($query) use ($checkin, $checkout) {
+                    $query->whereHas('booking', function ($q) use ($checkin, $checkout) {
+                        $q->where(function ($q2) use ($checkin, $checkout) {
+                            $q2->whereBetween('tanggal_rencana_checkin', [$checkin, $checkout])
+                               ->orWhereBetween('tanggal_rencana_checkout', [$checkin, $checkout])
+                               ->orWhere(function ($q3) use ($checkin, $checkout) {
+                                   $q3->where('tanggal_rencana_checkin', '<=', $checkin)
+                                      ->where('tanggal_rencana_checkout', '>=', $checkout);
+                               });
+                        });
+                    });
+                })
+                // Tambahkan kondisi ini agar kamar yang sudah dipilih tetap muncul
+                ->orWhereIn('id', $selectedRoomIds);
+            })
+            ->get();
+
+        $data['rooms'] = $rooms;
+        $data['selected_rooms'] = $selectedRoomIds;
+        $data['page_title'] = 'Plotting Kamar';
+
+        return view('pages.booking.plot-rooms', compact('data', 'booking'));
+    }
+
+
+
+    public function storePlotRooms(Request $request, $id) {
+        $request->validate([
+            'rooms' => 'required|array',
+            'rooms.*' => 'exists:rooms,id',
+        ]);
+
+        $booking = Booking::findOrFail($id);
+
+        EventPlotingRoom::where('booking_id', $id)->delete();
+
+        foreach ($request->rooms as $roomId) {
+            EventPlotingRoom::create([
+                'booking_id' => $id,
+                'room_id' => $roomId
+            ]);
+        }
+
+        Alert::success('Success', 'Kamar berhasil dipilih.');
+        return redirect()->route('booking.index');
     }
 }

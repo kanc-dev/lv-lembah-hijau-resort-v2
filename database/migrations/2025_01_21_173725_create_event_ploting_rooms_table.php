@@ -13,7 +13,12 @@ return new class extends Migration
     {
         Schema::create('event_ploting_rooms', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('booking_id');
+            $table->unsignedBigInteger('room_id');
             $table->timestamps();
+
+            $table->foreign('booking_id')->references('id')->on('bookings')->onDelete('cascade');
+            $table->foreign('room_id')->references('id')->on('rooms')->onDelete('cascade');
         });
     }
 
@@ -22,6 +27,10 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('event_ploting_rooms');
+        Schema::table('event_ploting_rooms', function (Blueprint $table) {
+            $table->dropForeign(['booking_id']);
+            $table->dropForeign(['room_id']);
+            $table->dropColumn(['booking_id', 'room_id']);
+        });
     }
 };

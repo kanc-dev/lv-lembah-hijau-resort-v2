@@ -54,7 +54,17 @@ Route::middleware('auth')->group(function () {
 
     // Route::get('/booking', [BookingController::class, 'index'])->name('booking.index');
     Route::middleware('role.access:1,3')->group(function () {
+        // Route::get('/booking', [BookingController::class, 'index'])->name('booking.index');
+        // Route::get('/booking/create', [BookingController::class, 'create'])->name('booking.create');
+        // Route::post('/booking', [BookingController::class, 'store'])->name('booking.store');
+        // Route::get('/booking/{id}/edit', [BookingController::class, 'edit'])->name('booking.edit');
+        // Route::put('/booking/{id}/update', [BookingController::class, 'update'])->name('booking.update');
+        // Route::delete('/booking/{id}/destroy', [BookingController::class, 'destroy'])->name('booking.destroy');
         Route::resource('booking', BookingController::class);
+
+        Route::get('/booking/{id}/plot-rooms', [BookingController::class, 'plotRooms'])->name('booking.plotRooms');
+        Route::post('/booking/{id}/plot-rooms', [BookingController::class, 'storePlotRooms'])->name('booking.storePlotRooms');
+
     });
 
     Route::middleware('role.access:1,3')->group(function () {

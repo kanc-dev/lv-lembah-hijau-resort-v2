@@ -24,6 +24,11 @@ class Room extends Model
         return $this->belongsTo(Event::class);
     }
 
+    public function eventPlotingRooms() {
+        return $this->hasMany(EventPlotingRoom::class, 'room_id');
+    }
+
+
     public function events()
     {
         return $this->hasManyThrough(

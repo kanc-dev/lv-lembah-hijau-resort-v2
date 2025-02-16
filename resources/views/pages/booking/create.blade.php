@@ -6,11 +6,11 @@
         <div class="row">
             <div class="col-12">
                 <div class="page-title-box d-sm-flex align-items-center justify-content-between">
-                    <h4 class="mb-sm-0">Tambah Booking</h4>
+                    <h4 class="mb-sm-0">Tambah Reservasi</h4>
                     <div class="page-title-right">
                         <ol class="m-0 breadcrumb">
                             <li class="breadcrumb-item"><a href="{{ url('/') }}">Home</a></li>
-                            <li class="breadcrumb-item active">Tambah Booking</li>
+                            <li class="breadcrumb-item active">Tambah Reservasi</li>
                         </ol>
                     </div>
                 </div>
@@ -22,7 +22,7 @@
             <div class="col-lg-12">
                 <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0 card-title">Tambah Booking</h5>
+                        <h5 class="mb-0 card-title">Tambah Reservasi</h5>
                         <a href="{{ route('booking.index') }}" class="d-flex align-items-center btn btn-secondary">
                             <i class="ri-arrow-left-line"></i>
                             <span>Kembali</span>
@@ -188,8 +188,9 @@
                                 </div>
                             </div>
 
-                            <div class="text-start">
-                                <button type="submit" class="btn btn-success">Tambah Booking</button>
+                            <div class="float-end">
+                                <button type="reset" class="btn btn-danger">Reset</button>
+                                <button type="submit" class="btn btn-success">Simpan</button>
                             </div>
                         </form>
                     </div>

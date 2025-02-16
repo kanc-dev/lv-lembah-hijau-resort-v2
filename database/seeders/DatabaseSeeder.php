@@ -17,11 +17,11 @@ class DatabaseSeeder extends Seeder
             BranchSeeder::class,
             UserSeeder::class,
             UserRoleSeeder::class,
-            RoomSeeder::class,
-            EventSeeder::class,
-            BookingSeeder::class,
-            GuestSeeder::class,
-            RoomStatusSeeder::class,
+            // RoomSeeder::class,
+            // EventSeeder::class,
+            // BookingSeeder::class,
+            // GuestSeeder::class,
+            // RoomStatusSeeder::class,
         ]);
     }
 }
