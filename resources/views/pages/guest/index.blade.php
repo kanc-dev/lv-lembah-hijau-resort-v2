@@ -229,6 +229,8 @@
                                     <th>Unit</th>
                                     <th>Nama Kamar</th>
                                     <th>Kapasitas</th>
+                                    <th>Bed Terisi</th>
+                                    <th>Bed Tersedia</th>
                                     <th>Aksi</th>
                                 </tr>
                             </thead>
@@ -239,11 +241,15 @@
                                         <td>{{ $room->branch->name }}</td>
                                         <td>{{ $room->nama }}</td>
                                         <td>{{ $room->kapasitas }}</td>
+                                        <td>{{ $room->bed_terisi}}</td>
+                                        <td>{{ $room->bed_sisa}}</td>
                                         <td>
                                             <button class="btn btn-sm btn-success plot-room-btn"
                                                 data-room-id="{{ $room->id }}"
-                                                data-room-capacity="{{ $room->kapasitas }}">
-                                                Plot
+                                                data-room-capacity="{{ $room->kapasitas }}"
+                                                @if ($room->terisi >= $room->kapasitas) disabled @endif
+                                                >
+                                                {{ $room->terisi >= $room->kapasitas ? 'Penuh' : 'Pilih' }}
                                             </button>
                                         </td>
                                     </tr>

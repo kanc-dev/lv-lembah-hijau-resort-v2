@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Guest;
 use App\Http\Requests\StoreGuestRequest;
 use App\Http\Requests\UpdateGuestRequest;
+use App\Models\Booking;
 use App\Models\Branch;
 use App\Models\Event;
 use App\Models\GuestCheckin;
@@ -25,32 +26,49 @@ class GuestController extends Controller
         $user = Auth::user();
         $branchId = $user->branch_id ?? null;
 
-        $query = Guest::with('branch.rooms', 'events', 'guestcheckins.room');
+        $guests_query = Guest::with('branch.rooms', 'events', 'guestcheckins.room');
 
         if ($branchId) {
-            $query->where('branch_id', $branchId);
+            $guests_query->where('branch_id', $branchId);
         }
 
         if ($request->has('nama') && $request->nama != '') {
-            $query->where('nama', 'like', '%' . $request->nama . '%');
+            $guests_query->where('nama', 'like', '%' . $request->nama . '%');
         }
 
         if ($request->has('no_hp') && $request->no_hp != '') {
-            $query->where('no_hp', 'like', '%' . $request->no_hp . '%');
+            $guests_query->where('no_hp', 'like', '%' . $request->no_hp . '%');
         }
 
         if ($request->has('email') && $request->email != '') {
-            $query->where('email', 'like', '%' . $request->email . '%');
+            $guests_query->where('email', 'like', '%' . $request->email . '%');
         }
 
         if ($request->has('no_polisi') && $request->no_polisi != '') {
-            $query->where('no_polisi', 'like', '%' . $request->no_polisi . '%');
+            $guests_query->where('no_polisi', 'like', '%' . $request->no_polisi . '%');
         }
 
-        $guests = $query->paginate(10);
+        $guests = $guests_query->paginate(10);
+
+        $rooms_query = Room::with('branch')
+            ->join('event_ploting_rooms', 'rooms.id', '=', 'event_ploting_rooms.room_id')
+            ->select('rooms.*')
+            ->selectRaw('(rooms.kapasitas - COALESCE((SELECT COUNT(*) FROM guest_checkins WHERE guest_checkins.room_id = rooms.id AND guest_checkins.tanggal_checkout IS NULL), 0)) as bed_sisa')
+            ->selectRaw('(SELECT COUNT(*) FROM guest_checkins WHERE guest_checkins.room_id = rooms.id AND guest_checkins.tanggal_checkout IS NULL) as bed_terisi')
+            ->where('status', 'available')
+            ->whereRaw('(rooms.kapasitas - (SELECT COUNT(*) FROM guest_checkins WHERE guest_checkins.room_id = rooms.id AND guest_checkins.tanggal_checkout IS NULL)) > 0');
+
+        if ($branchId) {
+            $rooms_query->where('branch_id', $branchId);
+        }
+
+        $rooms = $rooms_query->get();
+
+        // dd($rooms);
+        // $data['rooms'] = Room::getAvailable($branchId)->get();
 
         $data['guests'] = $guests;
-        $data['rooms'] = Room::getAvailable($branchId)->get();
+        $data['rooms'] = $rooms;
         $data['page_title'] = 'Data Tamu';
         // dd($data);
 
@@ -66,16 +84,18 @@ class GuestController extends Controller
         $branchId = $user->branch_id;
         if ($branchId) {
             $branches = Branch::where('id', $branchId)->get();
-            $events = Event::where('branch_id', $branchId)->get();
+            $bookings = Booking::with('event')->where('unit_origin_id', $branchId)->get();
             $rooms = Room::where('branch_id', $branchId)->get();
         } else {
             $branches = Branch::all();
-            $events = Event::all();
+            $bookings = Booking::with('event')->get();
             $rooms = Room::all();
         }
         $data['rooms'] = $rooms;
         $data['branches'] = $branches;
-        $data['events'] = $events;
+        $data['bookings'] = $bookings;
+
+        // dd($data);
         $data['page_title'] = 'Tambah Tamu';
         return view('pages.guest.create', compact('data'));
     }
@@ -85,6 +105,10 @@ class GuestController extends Controller
      */
     public function store(Request $request)
     {
+
+        $booking = Booking::findOrFail($request->event_id);
+        // dd($booking);
+
         $request->validate([
             'nama' => 'required|string|max:255',
             'jenis_kelamin' => 'required|string|max:1',
@@ -115,8 +139,7 @@ class GuestController extends Controller
             'tanggal_rencana_checkout' => $request->tanggal_rencana_checkout,
         ]);
 
-        // Associate the guest with the event through the event_guest pivot table
-        $guest->events()->attach($request->event_id);
+        $guest->events()->attach($booking->event_id, ['booking_id' => $request->event_id]);
         Alert::success('Success', 'Data Tamu Berhasil Ditambahkan');
         return redirect()->route('guest.index');
     }

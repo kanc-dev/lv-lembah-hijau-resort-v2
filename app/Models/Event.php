@@ -17,9 +17,16 @@ class Event extends Model
         return $this->hasMany(Booking::class);
     }
 
+    // public function booking()
+    // {
+    //     return $this->hasOne(Booking::class);
+    // }
+
     public function guests()
     {
-        return $this->belongsToMany(Guest::class, 'event_guest');
+        return $this->belongsToMany(Guest::class, 'event_guest')
+                ->withPivot('booking_id')
+                ->withTimestamps();
     }
 
     public function branch()

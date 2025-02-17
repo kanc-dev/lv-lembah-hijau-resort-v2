@@ -17,19 +17,22 @@
                                 <th>No</th>
                                 <th>Nama Kamar (Unit)</th>
                                 <th>Kapasitas</th>
-                                <th>Terisi</th>
-                                <th>Sisa Bed</th>
+                                <th>Bed Terisi</th>
+                                <th>Bed Tersedia</th>
                                 <th>Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach ($rooms as $index => $room)
+                                @if ($room->branch_id !== $guest->branch_id)
+                                    @continue
+                                @endif
                                 <tr>
                                     <td>{{ $loop->iteration }}</td>
                                     <td>{{ $room->nama }} ({{ $room->branch->name }})</td>
                                     <td>{{ $room->kapasitas }}</td>
-                                    <td>{{ $room->terisi }}</td>
-                                    <td>{{ $room->kapasitas - $room->terisi }}</td>
+                                    <td>{{ $room->bed_terisi}}</td>
+                                    <td>{{ $room->bed_sisa}}</td>
                                     <td>
                                         <form action="{{ route('guest.plot-room.store', $guest->id) }}" method="POST" class="d-inline">
                                             @csrf

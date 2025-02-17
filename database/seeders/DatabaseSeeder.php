@@ -17,7 +17,7 @@ class DatabaseSeeder extends Seeder
             BranchSeeder::class,
             UserSeeder::class,
             UserRoleSeeder::class,
-            // RoomSeeder::class,
+            RoomSeeder::class,
             // EventSeeder::class,
             // BookingSeeder::class,
             // GuestSeeder::class,

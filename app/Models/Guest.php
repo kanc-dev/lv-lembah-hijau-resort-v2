@@ -25,7 +25,9 @@ class Guest extends Model
 
     public function events()
     {
-        return $this->belongsToMany(Event::class, 'event_guest');
+        return $this->belongsToMany(Event::class, 'event_guest')
+                ->withPivot('booking_id')
+                ->withTimestamps();
     }
 
     public function guestcheckins()

@@ -121,10 +121,10 @@
                                             @enderror
                                                     required>
                                                     <option value="">--Pilih Pendidikan / Kelas--</option>
-                                                    @foreach ($data['events'] as $event)
-                                                        <option value="{{ $event->id }}"
-                                                            {{ old('event_id') == $event->id ? 'selected' : '' }}>
-                                                            {{ $event->nama_kelas }}
+                                                    @foreach ($data['bookings'] as $booking)
+                                                        <option value="{{ $booking->id }}"
+                                                            {{ old('event_id') == $booking->id ? 'selected' : '' }}>
+                                                            {{ $booking->event->nama_kelas }}
                                                         </option>
                                                     @endforeach
                                                 </select>

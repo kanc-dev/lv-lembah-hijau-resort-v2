@@ -150,10 +150,10 @@
                                         <select class="form-select @error('event_id') is-invalid @enderror" id="event_id"
                                             name="event_id" required>
                                             <option value="">Pilih Kelas / Pendidikan</option>
-                                            @foreach ($data['events'] as $event)
-                                                <option value="{{ $event->id }}"
-                                                    {{ old('event_id') == $event->id ? 'selected' : '' }}>
-                                                    {{ $event->nama_kelas }}
+                                            @foreach ($data['bookings'] as $booking)
+                                                <option value="{{ $booking->id }}"
+                                                    {{ old('event_id') == $booking->id ? 'selected' : '' }}>
+                                                    {{ $booking->event->nama_kelas }}
                                                 </option>
                                             @endforeach
                                         </select>
