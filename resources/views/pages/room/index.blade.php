@@ -37,19 +37,19 @@
                                 <strong>{{ session('success') }}</strong>
                             </div>
                         @endif
-                        <div class="mb-3">
+                        {{-- <div class="mb-3">
                             <button id="bulkPlotEvent" class="btn btn-warning btn-sm" data-bs-toggle="modal"
                                 data-bs-target="#bulkPlotEventModal" disabled>Bulk Plot Event</button>
-                        </div>
+                        </div> --}}
                         <table id="scroll-horizontal" class="table align-middle nowrap" style="width:100%">
                             <thead>
                                 <tr>
-                                    <th scope="col" style="width: 10px;">
+                                    {{-- <th scope="col" style="width: 10px;">
                                         <div class="form-check">
                                             <input class="form-check-input fs-15" type="checkbox" id="checkAll"
                                                 value="option">
                                         </div>
-                                    </th>
+                                    </th> --}}
                                     <th>ID</th>
                                     <th>Unit</th>
                                     <th>Room Name</th>
@@ -59,19 +59,19 @@
                                     {{-- <th>Kapasitas</th>
                                     <th>Terisi</th> --}}
                                     {{-- <th>Tersedia</th> --}}
-                                    <th>Event</th>
+                                    {{-- <th>Event</th> --}}
                                     <th>Action</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach ($data['rooms'] as $room)
                                     <tr>
-                                        <th scope="row">
+                                        {{-- <th scope="row">
                                             <div class="form-check">
                                                 <input class="form-check-input fs-15 room-checkbox" type="checkbox"
                                                     name="checkAll" value="{{ $room['id'] }}">
                                             </div>
-                                        </th>
+                                        </th> --}}
                                         <td>{{ $loop->iteration }}</td>
                                         <td>{{ $room->branch->name ?? 'N/A' }}</td>
                                         <td><a href="#!">{{ $room['nama'] }}</a></td>
@@ -83,7 +83,7 @@
                                         {{-- <td>{{ $room['kapasitas'] }}</td>
                                         <td>{{ $room['terisi'] ?? 0 }}</td> --}}
                                         {{-- <td>{{ $room['kapasitas'] - $room['terisi'] }}</td> --}}
-                                        <td>
+                                        {{-- <td>
                                             @if (!$room['event_id'])
                                                 @php
                                                     $events = $room->guestCheckins->flatMap(function ($checkin) {
@@ -99,7 +99,7 @@
                                             @else
                                                 <span>{{ $room->event->nama_kelas }}</span>
                                             @endif
-                                        </td>
+                                        </td> --}}
                                         <td>
                                             <div class="dropdown d-inline-block">
                                                 <button class="btn btn-soft-secondary btn-sm dropdown" type="button"

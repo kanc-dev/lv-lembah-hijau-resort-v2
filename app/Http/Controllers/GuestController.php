@@ -32,20 +32,52 @@ class GuestController extends Controller
             $guests_query->where('branch_id', $branchId);
         }
 
-        if ($request->has('nama') && $request->nama != '') {
-            $guests_query->where('nama', 'like', '%' . $request->nama . '%');
+        if ($request->has('search') && $request->search != '') {
+            $search = $request->search;
+            $guests_query->where(function ($query) use ($search) {
+                $query->where('nama', 'like', '%' . $search . '%')
+                      ->orWhere('no_hp', 'like', '%' . $search . '%')
+                      ->orWhere('email', 'like', '%' . $search . '%')
+                      ->orWhere('no_polisi', 'like', '%' . $search . '%');
+            });
         }
 
-        if ($request->has('no_hp') && $request->no_hp != '') {
-            $guests_query->where('no_hp', 'like', '%' . $request->no_hp . '%');
+        if ($request->has('filter_gender') && $request->filter_gender != '') {
+            $guests_query->where('jenis_kelamin', $request->filter_gender);
         }
 
-        if ($request->has('email') && $request->email != '') {
-            $guests_query->where('email', 'like', '%' . $request->email . '%');
+        if ($request->has('filter_status') && !empty($request->filter_status)) {
+            $guests_query->where(function ($query) use ($request) {
+                foreach ($request->filter_status as $status) {
+                    switch ($status) {
+                        case 'plotted':
+                            $query->whereHas('guestcheckins', function ($q) {
+                                $q->whereNotNull('room_id');
+                            });
+                            break;
+                        case 'checked_in':
+                            $query->whereHas('guestcheckins', function ($q) {
+                                $q->whereNotNull('tanggal_checkin');
+                            });
+                            break;
+                        case 'checked_out':
+                            $query->whereHas('guestcheckins', function ($q) {
+                                $q->whereNotNull('tanggal_checkout');
+                            });
+                            break;
+                    }
+                }
+            });
         }
 
-        if ($request->has('no_polisi') && $request->no_polisi != '') {
-            $guests_query->where('no_polisi', 'like', '%' . $request->no_polisi . '%');
+        if ($request->has('filter_event') && $request->filter_event != '') {
+            $guests_query->whereHas('events', function ($q) use ($request) {
+                $q->where('id', $request->filter_event);
+            });
+        }
+
+        if ($request->has('filter_unit') && $request->filter_unit != '') {
+            $guests_query->where('branch_id', $request->filter_unit);
         }
 
         $guests = $guests_query->paginate(10);
@@ -58,17 +90,31 @@ class GuestController extends Controller
             ->where('status', 'available')
             ->whereRaw('(rooms.kapasitas - (SELECT COUNT(*) FROM guest_checkins WHERE guest_checkins.room_id = rooms.id AND guest_checkins.tanggal_checkout IS NULL)) > 0');
 
+
+
         if ($branchId) {
             $rooms_query->where('branch_id', $branchId);
         }
 
         $rooms = $rooms_query->get();
 
+        if($branchId) {
+            $events = Booking::with('event')->where('unit_destination_id', $branchId)->get();
+            $branches = Branch::where('id', $branchId)->get();
+        } else {
+            $events = Booking::with('event')->get();
+            $branches = Branch::all();
+        }
+
+        // dump($rooms);
+
         // dd($rooms);
         // $data['rooms'] = Room::getAvailable($branchId)->get();
 
         $data['guests'] = $guests;
         $data['rooms'] = $rooms;
+        $data['bookings'] = $events;
+        $data['branches'] = $branches;
         $data['page_title'] = 'Data Tamu';
         // dd($data);
 

@@ -9,6 +9,7 @@ use App\Models\Branch;
 use App\Models\Event;
 use App\Models\EventPlotingRoom;
 use App\Models\Room;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use RealRashid\SweetAlert\Facades\Alert;
@@ -27,7 +28,7 @@ class BookingController extends Controller
 
 
         if ($branchId) {
-            $query->where('unit_origin_id', $branchId);
+            $query->where('unit_destination_id', $branchId);
         }
 
         if ($request->has('nama_kelas') && !empty($request->nama_kelas)) {
@@ -86,7 +87,18 @@ class BookingController extends Controller
             'tanggal_rencana_checkout' => 'required|date',
         ]);
 
-        Booking::create($request->all());
+        $checkin = Carbon::parse($request->tanggal_rencana_checkin)->setTime(14, 0, 0);
+        $checkout = Carbon::parse($request->tanggal_rencana_checkout)->setTime(11, 0, 0);
+
+
+        Booking::create([
+            'event_id' => $request->event_id,
+            'jumlah_peserta' => $request->jumlah_peserta,
+            'unit_origin_id' => $request->unit_origin_id,
+            'unit_destination_id' => $request->unit_destination_id,
+            'tanggal_rencana_checkin' => $checkin,
+            'tanggal_rencana_checkout' => $checkout
+        ]);
         Alert::success('Success', 'Reservasi berhasil dibuat.');
         return redirect()->route('booking.index');
     }
@@ -161,14 +173,11 @@ class BookingController extends Controller
     public function plotRooms($id) {
         $booking = Booking::with('eventPlotingRooms')->findOrFail($id);
 
-        // Ambil tanggal booking saat ini
         $checkin = $booking->tanggal_rencana_checkin;
         $checkout = $booking->tanggal_rencana_checkout;
 
-        // Ambil ID kamar yang sudah dipilih untuk booking ini
         $selectedRoomIds = $booking->eventPlotingRooms->pluck('room_id')->toArray();
 
-        // Ambil kamar yang tersedia (tidak bentrok dengan booking lain) **kecuali kamar yang sudah dipilih**
         $rooms = Room::where('branch_id', $booking->unit_destination_id)
             ->where(function ($query) use ($checkin, $checkout, $selectedRoomIds) {
                 $query->whereDoesntHave('eventPlotingRooms', function ($query) use ($checkin, $checkout) {
@@ -183,10 +192,16 @@ class BookingController extends Controller
                         });
                     });
                 })
-                // Tambahkan kondisi ini agar kamar yang sudah dipilih tetap muncul
                 ->orWhereIn('id', $selectedRoomIds);
             })
             ->get();
+
+        dump([
+            'checkin' => $checkin,
+            'checkout' => $checkout,
+            'selectedRoomIds' => $selectedRoomIds,
+            'rooms' => $rooms
+        ]);
 
         $data['rooms'] = $rooms;
         $data['selected_rooms'] = $selectedRoomIds;

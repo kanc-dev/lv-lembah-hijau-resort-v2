@@ -44,7 +44,7 @@
                         </tr>
                         <tr>
                             <th>Tanggal Rencana Check-out</th>
-                            <td>{{ $booking->tanggal_rencana_checkin }}</td>
+                            <td>{{ $booking->tanggal_rencana_checkout }}</td>
                         </tr>
                     </table>
                 </div>

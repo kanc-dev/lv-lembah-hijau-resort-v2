@@ -18,8 +18,8 @@ return new class extends Migration
             $table->json('rooms')->nullable();
             $table->unsignedBigInteger('unit_origin_id');
             $table->unsignedBigInteger('unit_destination_id');
-            $table->date('tanggal_rencana_checkin');
-            $table->date('tanggal_rencana_checkout');
+            $table->dateTime('tanggal_rencana_checkin');
+            $table->dateTime('tanggal_rencana_checkout');
             $table->timestamps();
             $table->foreign('event_id')->references('id')->on('events')->onDelete('cascade');
             $table->foreign('unit_origin_id')->references('id')->on('branches')->onDelete('cascade');

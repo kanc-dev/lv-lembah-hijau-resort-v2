@@ -33,29 +33,74 @@
                         @endif
 
                         <form action="{{ route('guest.index') }}" method="GET">
-                            <div class="row g-2">
-                                <div class="col-md-3">
-                                    <input type="text" name="nama" class="form-control" placeholder="Cari Nama..." value="{{ request('nama') }}">
-                                </div>
-                                <div class="col-md-9">
-                                    <div class="row g-2">
-                                        <div class="col-md-4">
-                                            <input type="text" name="no_hp" class="form-control" placeholder="Cari Telepon..." value="{{ request('no_hp') }}">
-                                        </div>
-                                        <div class="col-md-4">
-                                            <input type="text" name="email" class="form-control" placeholder="Cari Email..." value="{{ request('email') }}">
-                                        </div>
-                                        <div class="col-md-2">
-                                            <input type="text" name="no_polisi" class="form-control" placeholder="Cari Plat No..." value="{{ request('no_polisi') }}">
-                                        </div>
-                                        <div class="col-md-2">
-                                            <div class="gap-2 d-flex justify-content-end">
-                                                <button type="submit" class="btn w-100 btn-primary"><i class="ri-search-line"></i></button>
-                                                <a href="{{ route('guest.index') }}" class="btn w-100 btn-danger"><i class="ri-refresh-line"></i></a>
+                            <div class="g-2 row">
+                                <div class="col-md-4">
+                                    <div class="form-control">
+                                        <label class="form-check-label"><strong>Status Tamu:</strong></label>
+                                        <div class="flex-wrap d-flex">
+                                            <div class="form-check me-3">
+                                                <input class="form-check-input" type="checkbox" name="filter_status[]" value="plotted" id="plotted" {{ in_array('plotted', (array) request('filter_status', [])) ? 'checked' : '' }}>
+                                                <label class="form-check-label" for="plotted">Sudah Plot Kamar</label>
+                                            </div>
+                                            <div class="form-check me-3">
+                                                <input class="form-check-input" type="checkbox" name="filter_status[]" value="checked_in" id="checked_in" {{ in_array('checked_in', (array) request('filter_status', [])) ? 'checked' : '' }}>
+                                                <label class="form-check-label" for="checked_in">Sudah Check-In</label>
+                                            </div>
+                                            <div class="form-check me-3">
+                                                <input class="form-check-input" type="checkbox" name="filter_status[]" value="checked_out" id="checked_out" {{ in_array('checked_out', (array) request('filter_status', [])) ? 'checked' : '' }}>
+                                                <label class="form-check-label" for="checked_out">Sudah Check-Out</label>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
+                                <div class="col-md-4">
+                                    <div class="row g-2">
+
+                                        <div class="col-12">
+                                            <input type="text" name="search" class="form-control" placeholder="Cari Nama/Telp/Email..." value="{{ request('search') }}">
+                                        </div>
+                                        <div class="col-12">
+                                            <select class="form-select" id="filter_gender" name="filter_gender">
+                                                <option value="">--Filter Jenis Kelamin--</option>
+                                                <option value="l" {{ request('filter_gender') == 'l' ? 'selected' : '' }}>Laki-laki</option>
+                                                <option value="p" {{ request('filter_gender') == 'p' ? 'selected' : '' }}>Perempuan</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="row g-2">
+                                        <div class="col-12">
+                                            <select class="form-select" id="filter_event" name="filter_event">
+                                                <option value="">--Kelas / Pendidikan--</option>
+                                                @foreach ($data['bookings'] as $booking)
+                                                    <option value="{{ $booking->id }}">{{ $booking->event->nama_kelas }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <!-- Unit Filter -->
+                                        <div class="col-12">
+                                            <div class="row g-2">
+                                                <div class="col-md-9">
+                                                    <select class="form-select" id="filter_unit" name="filter_unit">
+                                                        <option value="">--Unit--</option>
+                                                        @foreach ($data['branches'] as $branch)
+                                                            <option value="{{ $branch->id }}">{{ $branch->name }}</option>
+                                                        @endforeach
+                                                    </select>
+                                                </div>
+                                                <div class="gap-2 col-md-3 d-flex ">
+                                                    <button type="submit" class="btn w-100 btn-primary"><i class="ri-search-line"></i></button>
+                                                    <a href="{{ route('guest.index') }}" class="btn w-100 btn-danger"><i class="ri-refresh-line"></i></a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {{-- <div class="gap-2 col-12 d-flex justify-content-end">
+                                    <button type="submit" class="btn btn-primary"><i class="ri-search-line"></i></button>
+                                    <a href="{{ route('guest.index') }}" class="btn btn-danger"><i class="ri-refresh-line"></i></a>
+                                </div> --}}
                             </div>
                         </form>
 
@@ -77,7 +122,8 @@
                         </form> --}}
 
 
-
+                        {{-- <div class="form-control">
+                        </div> --}}
                         <div class="mt-3">
                             <button id="bulkPlotRoom" class="btn btn-info btn-sm" data-bs-toggle="modal"
                                 data-bs-target="#bulkPlotRoomModal" disabled>Bulk Plot Kamar</button>
