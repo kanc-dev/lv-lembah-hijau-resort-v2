@@ -72,7 +72,7 @@ class GuestController extends Controller
 
         if ($request->has('filter_event') && $request->filter_event != '') {
             $guests_query->whereHas('events', function ($q) use ($request) {
-                $q->where('id', $request->filter_event);
+                $q->where('booking_id', $request->filter_event);
             });
         }
 

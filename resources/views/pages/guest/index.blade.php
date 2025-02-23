@@ -34,6 +34,7 @@
 
                         <form action="{{ route('guest.index') }}" method="GET">
                             <div class="g-2 row">
+                                <!-- Filter Status Tamu -->
                                 <div class="col-md-4">
                                     <div class="form-control">
                                         <label class="form-check-label"><strong>Status Tamu:</strong></label>
@@ -53,9 +54,9 @@
                                         </div>
                                     </div>
                                 </div>
+                                <!-- Filter Pencarian dan Jenis Kelamin -->
                                 <div class="col-md-4">
                                     <div class="row g-2">
-
                                         <div class="col-12">
                                             <input type="text" name="search" class="form-control" placeholder="Cari Nama/Telp/Email..." value="{{ request('search') }}">
                                         </div>
@@ -68,28 +69,28 @@
                                         </div>
                                     </div>
                                 </div>
+                                <!-- Filter Event dan Unit -->
                                 <div class="col-md-4">
                                     <div class="row g-2">
                                         <div class="col-12">
                                             <select class="form-select" id="filter_event" name="filter_event">
                                                 <option value="">--Kelas / Pendidikan--</option>
                                                 @foreach ($data['bookings'] as $booking)
-                                                    <option value="{{ $booking->id }}">{{ $booking->event->nama_kelas }}</option>
+                                                    <option value="{{ $booking->id }}" {{ request('filter_event') == $booking->id ? 'selected' : '' }}>{{ $booking->event->nama_kelas }}</option>
                                                 @endforeach
                                             </select>
                                         </div>
-                                        <!-- Unit Filter -->
                                         <div class="col-12">
                                             <div class="row g-2">
                                                 <div class="col-md-9">
-                                                    <select class="form-select" id="filter_unit" name="filter_unit">
+                                                    <select class="form-select" id="filter_unit" name="filter_unit" {{ auth()->user()->branch_id !== 0 ? 'disabled' : '' }}>
                                                         <option value="">--Unit--</option>
                                                         @foreach ($data['branches'] as $branch)
-                                                            <option value="{{ $branch->id }}">{{ $branch->name }}</option>
+                                                            <option value="{{ $branch->id }}" {{ request('filter_unit') == $branch->id || auth()->user()->branch_id == $branch->id ? 'selected' : '' }}>{{ $branch->name }}</option>
                                                         @endforeach
                                                     </select>
                                                 </div>
-                                                <div class="gap-2 col-md-3 d-flex ">
+                                                <div class="gap-2 col-md-3 d-flex">
                                                     <button type="submit" class="btn w-100 btn-primary"><i class="ri-search-line"></i></button>
                                                     <a href="{{ route('guest.index') }}" class="btn w-100 btn-danger"><i class="ri-refresh-line"></i></a>
                                                 </div>
@@ -97,10 +98,6 @@
                                         </div>
                                     </div>
                                 </div>
-                                {{-- <div class="gap-2 col-12 d-flex justify-content-end">
-                                    <button type="submit" class="btn btn-primary"><i class="ri-search-line"></i></button>
-                                    <a href="{{ route('guest.index') }}" class="btn btn-danger"><i class="ri-refresh-line"></i></a>
-                                </div> --}}
                             </div>
                         </form>
 
