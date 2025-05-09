@@ -31,7 +31,8 @@ class Booking extends Model
         return $this->belongsTo(Branch::class, 'unit_destination_id');
     }
 
-    public function eventPlotingRooms() {
+    public function eventPlotingRooms()
+    {
         return $this->hasMany(EventPlotingRoom::class, 'booking_id');
     }
 

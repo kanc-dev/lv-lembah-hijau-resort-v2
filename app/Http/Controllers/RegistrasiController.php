@@ -24,10 +24,11 @@ class RegistrasiController extends Controller
         $branchId = $branch_list[strtolower($branch)] ?? null;
         if ($branchId) {
             $branches = Branch::where('id', $branchId)->get();
-            $bookings = Booking::with('event')->where('branch_id', $branchId)->get();
+            $bookings = Booking::with('event')->where('unit_destination_id', $branchId)->where('tanggal_rencana_checkout', '>=', now()->toDateTimeString())->get();
         } else {
+            abort(404);
             $branches = Branch::all();
-            $bookings = Booking::with('event')->get();
+            $bookings = Booking::with('event')->where('tanggal_rencana_checkout', '>=', now()->toDateTimeString())->get();
         }
 
 

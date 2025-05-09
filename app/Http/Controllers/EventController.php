@@ -8,6 +8,7 @@ use App\Http\Requests\UpdateEventRequest;
 use App\Models\Branch;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use RealRashid\SweetAlert\Facades\Alert;
 
 class EventController extends Controller
 {
@@ -27,9 +28,9 @@ class EventController extends Controller
         $branchId = $user->branch_id;
 
         if ($branchId) {
-            $events = Event::with('branch')->where('branch_id', $branchId)->get();
+            $events = Event::with('branch')->where('branch_id', $branchId)->orderBy('created_at', 'desc')->paginate(10);
         } else {
-            $events = Event::with('branch')->get();
+            $events = Event::with('branch')->orderBy('created_at', 'desc')->paginate(10);
         }
         $data['events'] = $events;
         $data['page_title'] = 'Data Event';
@@ -67,7 +68,7 @@ class EventController extends Controller
         ]);
 
         Event::create($request->all());
-
+        Alert::success('Success', 'Event Berhasil Ditambahkan');
         return redirect()->route('event.index')->with('success', 'Event created successfully');
     }
 
@@ -116,6 +117,7 @@ class EventController extends Controller
         ]);
 
         $event->update($request->all());
+        Alert::success('Success', 'Event Berhasil Diperbarui');
 
         return redirect()->route('event.index')->with('success', 'Event updated successfully');
     }
@@ -126,6 +128,7 @@ class EventController extends Controller
     public function destroy(Event $event)
     {
         $event->delete();
+        Alert::success('Success', 'Event Berhasil Dihapus');
         return redirect()->route('event.index')->with('success', 'Event deleted successfully');
     }
 }

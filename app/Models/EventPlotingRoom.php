@@ -15,7 +15,8 @@ class EventPlotingRoom extends Model
         return $this->belongsTo(Booking::class, 'booking_id');
     }
 
-    public function room() {
+    public function room()
+    {
         return $this->belongsTo(Room::class, 'room_id');
     }
 }

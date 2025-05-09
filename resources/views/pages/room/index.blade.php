@@ -27,7 +27,7 @@
                 <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h5 class="mb-0 card-title">Data Kamar</h5>
-                        <a href="{{ route('room.create') }}" class="btn btn-primary">
+                        <a href="{{ route('room.create') }}" class="btn btn-primary btn-sm">
                             <i class="ri-add-fill"></i> <span>Tambah Kamar</span>
                         </a>
                     </div>
@@ -41,7 +41,7 @@
                             <button id="bulkPlotEvent" class="btn btn-warning btn-sm" data-bs-toggle="modal"
                                 data-bs-target="#bulkPlotEventModal" disabled>Bulk Plot Event</button>
                         </div> --}}
-                        <table id="scroll-horizontal" class="table align-middle nowrap" style="width:100%">
+                        <table class="table align-middle nowrap table-striped table-hover" style="width:100%">
                             <thead>
                                 <tr>
                                     {{-- <th scope="col" style="width: 10px;">
@@ -51,15 +51,18 @@
                                         </div>
                                     </th> --}}
                                     <th>ID</th>
-                                    <th>Unit</th>
-                                    <th>Room Name</th>
+                                    @if (!auth()->user()->branch_id)
+                                        <th>Unit</th>
+                                    @endif
+                                    <th>Nama Kamar</th>
                                     <th>Type</th>
                                     {{-- <th>Price</th> --}}
-                                    <th>Status</th>
+                                    {{-- <th>Status</th> --}}
                                     {{-- <th>Kapasitas</th>
                                     <th>Terisi</th> --}}
                                     {{-- <th>Tersedia</th> --}}
                                     {{-- <th>Event</th> --}}
+                                    <th>Created At</th>
                                     <th>Action</th>
                                 </tr>
                             </thead>
@@ -73,13 +76,17 @@
                                             </div>
                                         </th> --}}
                                         <td>{{ $loop->iteration }}</td>
-                                        <td>{{ $room->branch->name ?? 'N/A' }}</td>
-                                        <td><a href="#!">{{ $room['nama'] }}</a></td>
+                                        @if (!auth()->user()->branch_id)
+                                            <td>{{ $room->branch->name ?? 'N/A' }}</td>
+                                        @endif
+                                        <td>{{ $room['nama'] }}</td>
                                         <td>{{ $room['tipe'] }}</td>
+                                        <td>{{ $room['created_at'] }}</td>
                                         {{-- <td>{{ number_format($room['harga'], 0, ',', '.') }}</td> --}}
-                                        <td><span
+                                        {{-- <td>
+                                            <span
                                                 class="badge {{ $room['status'] == 'available' ? 'badge-soft-info' : 'badge-soft-secondary' }}">{{ ucfirst($room['status']) }}</span>
-                                        </td>
+                                        </td> --}}
                                         {{-- <td>{{ $room['kapasitas'] }}</td>
                                         <td>{{ $room['terisi'] ?? 0 }}</td> --}}
                                         {{-- <td>{{ $room['kapasitas'] - $room['terisi'] }}</td> --}}
@@ -101,41 +108,44 @@
                                             @endif
                                         </td> --}}
                                         <td>
-                                            <div class="dropdown d-inline-block">
-                                                <button class="btn btn-soft-secondary btn-sm dropdown" type="button"
-                                                    data-bs-toggle="dropdown" aria-expanded="false">
-                                                    <i class="align-middle ri-more-fill"></i>
-                                                </button>
-                                                <ul class="dropdown-menu dropdown-menu-end">
-                                                    <li>
-                                                        <a href="{{ route('room.edit', $room['id']) }}"
-                                                            class="dropdown-item">
-                                                            <i class="align-bottom ri-pencil-fill me-2 text-muted"></i> Edit
-                                                        </a>
-                                                    </li>
-                                                    @if (!auth()->user()->branch_id)
-                                                    <li>
-                                                        <form action="{{ route('room.destroy', $room['id']) }}"
-                                                            method="POST" class="d-inline"
-                                                            onsubmit="return confirm('Are you sure you want to delete this room?');">
-                                                            @csrf
-                                                            @method('DELETE')
-                                                            <button type="submit" class="dropdown-item remove-item-btn"
-                                                                onclick="confirmDelete({{ $room['id'] }})">
-                                                                <i
-                                                                    class="align-bottom ri-delete-bin-fill me-2 text-muted"></i>
-                                                                Delete
-                                                            </button>
-                                                        </form>
-                                                    </li>
-                                                    @endif
-                                                </ul>
+                                            <div class=" d-inline-block">
+                                                <a href="{{ route('room.edit', $room['id']) }}"
+                                                    class="btn btn-warning btn-sm" title="Edit">
+                                                    <i class="ri-edit-box-line"></i>
+                                                </a>
+                                                @if (!auth()->user()->branch_id)
+                                                    <form action="{{ route('room.destroy', $room['id']) }}" method="POST"
+                                                        class="d-inline"
+                                                        onsubmit="event.preventDefault();
+                                                            Swal.fire({
+                                                                title: 'Apakah Anda yakin?',
+                                                                text: 'Data akan dihapus secara permanen!',
+                                                                icon: 'warning',
+                                                                showCancelButton: true,
+                                                                confirmButtonColor: '#d33',
+                                                                cancelButtonColor: '#3085d6',
+                                                                confirmButtonText: 'Ya, hapus!',
+                                                                cancelButtonText: 'Batal'
+                                                            }).then((result) => {
+                                                                if (result.isConfirmed) {
+                                                                    event.target.submit();
+                                                                }
+                                                            });">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" class="btn btn-danger btn-sm remove-item-btn"
+                                                            title="Delete">
+                                                            <i class="ri-delete-bin-line"></i>
+                                                        </button>
+                                                    </form>
+                                                @endif
                                             </div>
                                         </td>
                                     </tr>
                                 @endforeach
                             </tbody>
                         </table>
+                        {{ $data['rooms']->links() }}
                     </div>
                 </div>
             </div>

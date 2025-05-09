@@ -420,19 +420,18 @@ class HomeController extends Controller
             ->when($branchId, function ($query, $branchId) {
                 return $query->where('branch_id', $branchId);
             })
-            ->get()
-            ->map(function ($room) {
+            ->get() // Tambahkan pagination
+            ->map(function ($room) { // Gunakan through() untuk mapping setelah pagination
                 $pendingCheckins = $room->guestCheckins->filter(function ($checkin) {
-                    return !is_null($checkin->guest_id);
-                });
-                $activeCheckins = $room->guestCheckins->filter(function ($checkin) {
-                    return !is_null($checkin->tanggal_checkin);
+                    return is_null($checkin->tanggal_checkout);
                 });
 
+                $activeCheckins = $room->guestCheckins->filter(function ($checkin) {
+                    return !is_null($checkin->tanggal_checkin) && is_null($checkin->tanggal_checkout);
+                });
 
                 return [
                     'id' => $room->id,
-                    'branch_id' => $room->branch_id,
                     'branch' => $room->branch->name ?? 'N/A',
                     'nama' => $room->nama,
                     'tipe' => $room->tipe,
@@ -441,18 +440,18 @@ class HomeController extends Controller
                     'terisi' => $activeCheckins->count(),
                     'sisa_bed' => $room->kapasitas - $activeCheckins->count(),
                     'event' => $room->event->nama_kelas ?? null,
-                    'events' => $room->guestCheckins->map(function ($checkin) {
-                       return $checkin->guest->events ?? [];
+                    'events' => $pendingCheckins->map(function ($checkin) {
+                        return $checkin->guest->events ?? [];
                     }),
                     'tamu' => $pendingCheckins->map(function ($checkin) {
                         return [
-                            'nama' => $checkin->guest->nama,
+                            'nama' => $checkin->guest ? $checkin->guest->nama : 'N/A',
                             'checkin' => $checkin->tanggal_checkin,
                             'checkout' => $checkin->tanggal_checkout,
                         ];
                     }),
                     'total_tamu' => $pendingCheckins->count(),
-                    'total_tamu_checkin' => $activeCheckins->count(),
+                    'total_tamu_checkin' => $activeCheckins->count()
                 ];
             });
 

@@ -10,7 +10,7 @@ class GuestCheckin extends Model
 
     public function guest()
     {
-        return $this->belongsTo(Guest::class);
+        return $this->belongsTo(Guest::class, 'guest_id');
     }
 
     public function room()

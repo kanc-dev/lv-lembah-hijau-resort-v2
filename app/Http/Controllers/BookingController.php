@@ -37,7 +37,7 @@ class BookingController extends Controller
             });
         }
 
-        $bookings = $query->paginate(10);
+        $bookings = $query->orderBy('created_at', 'desc')->paginate(10)->appends(request()->query());
 
         $data['bookings'] = $bookings;
         $data['page_title'] = 'Data Reservasi';
@@ -54,19 +54,19 @@ class BookingController extends Controller
         $branchId = $user->branch_id;
 
         if ($branchId) {
-            $branches = Branch::where('id', $branchId)->get();
-            $events = Event::where('branch_id', $branchId)->get();
+            $branches = Branch::where('id', $branchId)->orderBy('created_at', 'desc')->get();
+            $events = Event::where('branch_id', $branchId)->orderBy('created_at', 'desc')->get();
         } else {
-            $branches = Branch::all();
-            $events = Event::all();
+            $branches = Branch::orderBy('created_at', 'desc')->get();
+            $events = Event::orderBy('created_at', 'desc')->get();
         }
 
-        $rooms = Room::with('branch')->get();
+        $rooms = Room::with('branch')->orderBy('created_at', 'desc')->get();
 
         $data['rooms'] = $rooms;
         $data['events'] = $events;
         $data['branches'] = $branches;
-        $data['branch_destination'] = Branch::all();
+        $data['branch_origin'] = Branch::all();
         $data['page_title'] = 'Tambah Reservasi';
         return view('pages.booking.create', compact('data'));
     }
@@ -179,6 +179,49 @@ class BookingController extends Controller
         $selectedRoomIds = $booking->eventPlotingRooms->pluck('room_id')->toArray();
 
         $rooms = Room::where('branch_id', $booking->unit_destination_id)
+            ->get();
+
+        foreach ($rooms as $room) {
+            $conflictingBookings = $room->eventPlotingRooms()
+                ->whereHas('booking', function ($q) use ($checkin, $checkout) {
+                    $q->where(function ($q2) use ($checkin, $checkout) {
+                        $q2->whereBetween('tanggal_rencana_checkin', [$checkin, $checkout])
+                           ->orWhereBetween('tanggal_rencana_checkout', [$checkin, $checkout])
+                           ->orWhere(function ($q3) use ($checkin, $checkout) {
+                               $q3->where('tanggal_rencana_checkin', '<=', $checkin)
+                                  ->where('tanggal_rencana_checkout', '>=', $checkout);
+                           });
+                    });
+                })
+                ->with('booking.event')
+                ->get();
+
+
+            if ($conflictingBookings->isNotEmpty()) {
+                $room->nama_kelas = $conflictingBookings->pluck('booking.event.nama_kelas')->unique()->implode(', ');
+            } else {
+                $room->nama_kelas = null;
+            }
+        }
+
+        $data['rooms'] = $rooms;
+        $data['selected_rooms'] = $selectedRoomIds;
+        $data['page_title'] = 'Plotting Kamar';
+
+        // dd($data);
+
+        return view('pages.booking.plot-rooms', compact('data', 'booking'));
+    }
+
+    public function _plotRooms($id) {
+        $booking = Booking::with('eventPlotingRooms')->findOrFail($id);
+
+        $checkin = $booking->tanggal_rencana_checkin;
+        $checkout = $booking->tanggal_rencana_checkout;
+
+        $selectedRoomIds = $booking->eventPlotingRooms->pluck('room_id')->toArray();
+
+        $rooms = Room::where('branch_id', $booking->unit_destination_id)
             ->where(function ($query) use ($checkin, $checkout, $selectedRoomIds) {
                 $query->whereDoesntHave('eventPlotingRooms', function ($query) use ($checkin, $checkout) {
                     $query->whereHas('booking', function ($q) use ($checkin, $checkout) {
@@ -196,12 +239,12 @@ class BookingController extends Controller
             })
             ->get();
 
-        dump([
-            'checkin' => $checkin,
-            'checkout' => $checkout,
-            'selectedRoomIds' => $selectedRoomIds,
-            'rooms' => $rooms
-        ]);
+        // dump([
+        //     'checkin' => $checkin,
+        //     'checkout' => $checkout,
+        //     'selectedRoomIds' => $selectedRoomIds,
+        //     'rooms' => $rooms
+        // ]);
 
         $data['rooms'] = $rooms;
         $data['selected_rooms'] = $selectedRoomIds;

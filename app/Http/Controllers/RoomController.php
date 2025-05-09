@@ -31,10 +31,10 @@ class RoomController extends Controller
         $branchId = auth()->user()->branch_id;
 
         if ($branchId == 0) {
-            $rooms = Room::with(['branch', 'guestCheckins.guest.events'])->get();
+            $rooms = Room::with(['branch', 'guestCheckins.guest.events'])->paginate(10);
             $events = Event::all();
         } else {
-            $rooms = Room::with(['branch', 'guestCheckins.guest.events'])->where('branch_id', $branchId)->get();
+            $rooms = Room::with(['branch', 'guestCheckins.guest.events'])->where('branch_id', $branchId)->paginate(10);
             $events = Event::where('branch_id', $branchId)->get();
         }
 
@@ -51,15 +51,22 @@ class RoomController extends Controller
         $user = auth()->user();
         $branchId = $user->branch_id;
 
-        // Query dengan filter berdasarkan branchId jika ada
         $getRoomStatus = Room::with(['branch', 'event', 'guestCheckins.guest'])
             ->when($branchId, function ($query, $branchId) {
                 return $query->where('branch_id', $branchId);
             })
-            ->get()
-            ->map(function ($room) {
-                $activeCheckins = $room->guestCheckins->filter(function ($checkin) {
+            ->paginate(10) // Tambahkan pagination
+            ->through(function ($room) { // Gunakan through() untuk mapping setelah pagination
+                $pendingCheckins = $room->guestCheckins->filter(function ($checkin) {
                     return is_null($checkin->tanggal_checkout);
+                });
+
+                $activeCheckins = $room->guestCheckins->filter(function ($checkin) {
+                    return !is_null($checkin->tanggal_checkin) && is_null($checkin->tanggal_checkout);
+                });
+
+                $checkoutStatus = $room->guestCheckins->filter(function ($checkin) {
+                    return !is_null($checkin->tanggal_checkout);
                 });
 
                 return [
@@ -72,22 +79,66 @@ class RoomController extends Controller
                     'terisi' => $activeCheckins->count(),
                     'sisa_bed' => $room->kapasitas - $activeCheckins->count(),
                     'event' => $room->event->nama_kelas ?? null,
-                    'events' => $room->guestCheckins->map(function ($checkin) {
-                       return $checkin->guest->events ?? [];
+                    'events' => $pendingCheckins->map(function ($checkin) {
+                        return $checkin->guest->events ?? [];
                     }),
-                    'tamu' => $activeCheckins->map(function ($checkin) {
+                    'tamu' => $pendingCheckins->map(function ($checkin) {
                         return [
-                            'nama' => $checkin->guest->nama,
+                            'nama' => $checkin->guest ? $checkin->guest->nama : 'N/A',
                             'checkin' => $checkin->tanggal_checkin,
                             'checkout' => $checkin->tanggal_checkout,
                         ];
                     }),
-                    'total_tamu' => $activeCheckins->count(),
-                    'total_tamu_checkin' => $activeCheckins->whereNotNull('tanggal_checkin')->count(),
+                    'total_tamu' => $pendingCheckins->count(),
+                    'total_tamu_checkin' => $activeCheckins->count(),
+                    'total_tamu_checkout' => $checkoutStatus->count()
+                ];
+            });
+
+        $getSummaryRoomStatus = Room::with(['branch', 'event', 'guestCheckins.guest'])
+            ->when($branchId, function ($query, $branchId) {
+                return $query->where('branch_id', $branchId);
+            })
+            ->get() // Tambahkan pagination
+            ->map(function ($room) { // Gunakan through() untuk mapping setelah pagination
+                $pendingCheckins = $room->guestCheckins->filter(function ($checkin) {
+                    return is_null($checkin->tanggal_checkout);
+                });
+
+                $activeCheckins = $room->guestCheckins->filter(function ($checkin) {
+                    return !is_null($checkin->tanggal_checkin) && is_null($checkin->tanggal_checkout);
+                });
+
+                return [
+                    'id' => $room->id,
+                    'branch' => $room->branch->name ?? 'N/A',
+                    'nama' => $room->nama,
+                    'tipe' => $room->tipe,
+                    'status' => $room->status,
+                    'kapasitas' => $room->kapasitas,
+                    'terisi' => $activeCheckins->count(),
+                    'sisa_bed' => $room->kapasitas - $activeCheckins->count(),
+                    'event' => $room->event->nama_kelas ?? null,
+                    'events' => $pendingCheckins->map(function ($checkin) {
+                        return $checkin->guest->events ?? [];
+                    }),
+                    'tamu' => $pendingCheckins->map(function ($checkin) {
+                        return [
+                            'nama' => $checkin->guest ? $checkin->guest->nama : 'N/A',
+                            'checkin' => $checkin->tanggal_checkin,
+                            'checkout' => $checkin->tanggal_checkout,
+                        ];
+                    }),
+                    'total_tamu' => $pendingCheckins->count(),
+                    'total_tamu_checkin' => $activeCheckins->count(),
                 ];
             });
 
         $data['rooms'] = $getRoomStatus;
+        $data['rooms_summary'] = $getSummaryRoomStatus;
+
+        // dump($data);
+
         $data['page_title'] = 'Status Kamar';
 
 
@@ -104,24 +155,26 @@ class RoomController extends Controller
             $query->where('branch_id', $branchId);
         }
 
-        $data['reports'] = $query->get();
+        $data['reports'] = $query->paginate(10, ['*'], 'reports_page');
         $data['summary'] = $query
             ->selectRaw('
                 report_date,
                 branch,
-                COUNT(*) as total_kamar,  -- Total kamar
-                COUNT(CASE WHEN terisi > 0 THEN 1 END) as total_kamar_terisi,  -- Total kamar terisi
-                COUNT(CASE WHEN terisi = 0 THEN 1 END) as total_kamar_kosong,  -- Total kamar kosong
-                SUM(kapasitas) as total_kapasitas,  -- Total kapasitas
-                SUM(CASE WHEN terisi > 0 THEN terisi ELSE 0 END) as total_bed_terisi,  -- Total bed terisi
-                SUM(CASE WHEN sisa_bed > 0 THEN sisa_bed ELSE 0 END) as total_bed_tersedia  -- Total bed tersedia
+                COUNT(*) as total_kamar,
+                COUNT(CASE WHEN terisi > 0 THEN 1 END) as total_kamar_terisi,
+                COUNT(CASE WHEN terisi = 0 THEN 1 END) as total_kamar_kosong,
+                SUM(kapasitas) as total_kapasitas,
+                SUM(CASE WHEN terisi > 0 THEN terisi ELSE 0 END) as total_bed_terisi,
+                SUM(CASE WHEN sisa_bed > 0 THEN sisa_bed ELSE 0 END) as total_bed_tersedia,
+                SUM(total_tamu_checkin) as total_tamu_checkin,
+                SUM(total_tamu_checkout) as total_tamu_checkout
             ')
             ->groupBy('report_date', 'branch')
             ->orderBy('report_date', 'desc')
-            ->get();
+            ->paginate(10, ['*'], 'summary_page');
 
         // return response()->json($data['reports']);
-        // dd($data['summary']);
+        // dump($data['summary']);
 
 
         $data['page_title'] = 'Laporan Kamar';

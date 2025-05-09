@@ -55,6 +55,10 @@ class GenerateRoomReport extends Command
                 return is_null($checkin->tanggal_checkout);
             });
 
+            $checkoutStatus = $room->guestCheckins->filter(function ($checkin) {
+                return !is_null($checkin->tanggal_checkout);
+            });
+
             $reportData = [
                 'room_id' => $room->id,
                 'branch_id' => $room->branch_id,
@@ -69,13 +73,14 @@ class GenerateRoomReport extends Command
                 'event' => $room->event->nama_kelas ?? 'N/A',
                 'tamu' => $activeCheckins->map(function ($checkin) {
                     return [
-                        'nama' => $checkin->guest->nama,
+                        'nama' => $checkin->guest ? $checkin->guest->nama : 'N/A',
                         'checkin' => $checkin->tanggal_checkin,
                         'checkout' => $checkin->tanggal_checkout,
                     ];
                 })->values()->toJson(),
                 'total_tamu' => $activeCheckins->count(),
                 'total_tamu_checkin' => $activeCheckins->whereNotNull('tanggal_checkin')->count(),
+                'total_tamu_checkout' => $checkoutStatus->whereNotNull('tanggal_checkout')->count(),
                 'report_date' => now()->toDateString(),
                 'created_at' => now(),
                 'updated_at' => now(),

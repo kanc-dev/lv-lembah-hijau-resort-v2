@@ -8,6 +8,7 @@ use App\Http\Requests\UpdateGuestRequest;
 use App\Models\Booking;
 use App\Models\Branch;
 use App\Models\Event;
+use App\Models\EventPlotingRoom;
 use App\Models\GuestCheckin;
 use App\Models\Room;
 use Illuminate\Http\Request;
@@ -36,9 +37,9 @@ class GuestController extends Controller
             $search = $request->search;
             $guests_query->where(function ($query) use ($search) {
                 $query->where('nama', 'like', '%' . $search . '%')
-                      ->orWhere('no_hp', 'like', '%' . $search . '%')
-                      ->orWhere('email', 'like', '%' . $search . '%')
-                      ->orWhere('no_polisi', 'like', '%' . $search . '%');
+                    ->orWhere('no_hp', 'like', '%' . $search . '%')
+                    ->orWhere('email', 'like', '%' . $search . '%')
+                    ->orWhere('no_polisi', 'like', '%' . $search . '%');
             });
         }
 
@@ -50,19 +51,19 @@ class GuestController extends Controller
             $guests_query->where(function ($query) use ($request) {
                 foreach ($request->filter_status as $status) {
                     switch ($status) {
-                        case 'plotted':
+                        case 'not_plotted':
                             $query->whereHas('guestcheckins', function ($q) {
-                                $q->whereNotNull('room_id');
+                                $q->whereNull('room_id');
                             });
                             break;
-                        case 'checked_in':
+                        case 'not_checked_in':
                             $query->whereHas('guestcheckins', function ($q) {
-                                $q->whereNotNull('tanggal_checkin');
+                                $q->whereNull('tanggal_checkin');
                             });
                             break;
-                        case 'checked_out':
+                        case 'not_checked_out':
                             $query->whereHas('guestcheckins', function ($q) {
-                                $q->whereNotNull('tanggal_checkout');
+                                $q->whereNull('tanggal_checkout');
                             });
                             break;
                     }
@@ -80,43 +81,36 @@ class GuestController extends Controller
             $guests_query->where('branch_id', $request->filter_unit);
         }
 
-        $guests = $guests_query->paginate(10);
+        $guests = $guests_query->orderBy('created_at', 'desc')->paginate(10)->appends(request()->query());
 
         $rooms_query = Room::with('branch')
-            ->join('event_ploting_rooms', 'rooms.id', '=', 'event_ploting_rooms.room_id')
             ->select('rooms.*')
             ->selectRaw('(rooms.kapasitas - COALESCE((SELECT COUNT(*) FROM guest_checkins WHERE guest_checkins.room_id = rooms.id AND guest_checkins.tanggal_checkout IS NULL), 0)) as bed_sisa')
             ->selectRaw('(SELECT COUNT(*) FROM guest_checkins WHERE guest_checkins.room_id = rooms.id AND guest_checkins.tanggal_checkout IS NULL) as bed_terisi')
             ->where('status', 'available')
             ->whereRaw('(rooms.kapasitas - (SELECT COUNT(*) FROM guest_checkins WHERE guest_checkins.room_id = rooms.id AND guest_checkins.tanggal_checkout IS NULL)) > 0');
 
-
-
         if ($branchId) {
             $rooms_query->where('branch_id', $branchId);
         }
 
+        $rooms_query->distinct();
         $rooms = $rooms_query->get();
 
-        if($branchId) {
-            $events = Booking::with('event')->where('unit_destination_id', $branchId)->get();
+        if ($branchId) {
+            $events = Booking::with('event')->where('unit_destination_id', $branchId)->where('tanggal_rencana_checkout', '>=', now()->toDateTimeString())->get();
             $branches = Branch::where('id', $branchId)->get();
         } else {
-            $events = Booking::with('event')->get();
+            $events = Booking::with('event')->where('tanggal_rencana_checkout', '>=', now()->toDateTimeString())->get();
             $branches = Branch::all();
         }
-
-        // dump($rooms);
-
-        // dd($rooms);
-        // $data['rooms'] = Room::getAvailable($branchId)->get();
 
         $data['guests'] = $guests;
         $data['rooms'] = $rooms;
         $data['bookings'] = $events;
         $data['branches'] = $branches;
         $data['page_title'] = 'Data Tamu';
-        // dd($data);
+        // dump($data);
 
         return view('pages.guest.index', compact('data'));
     }
@@ -130,7 +124,7 @@ class GuestController extends Controller
         $branchId = $user->branch_id;
         if ($branchId) {
             $branches = Branch::where('id', $branchId)->get();
-            $bookings = Booking::with('event')->where('unit_origin_id', $branchId)->get();
+            $bookings = Booking::with('event')->where('unit_destination_id', $branchId)->get();
             $rooms = Room::where('branch_id', $branchId)->get();
         } else {
             $branches = Branch::all();
@@ -203,12 +197,25 @@ class GuestController extends Controller
      */
     public function edit(Guest $guest)
     {
+        $user = Auth::user();
+        $branchId = $user->branch_id;
+        if ($branchId) {
+            $branches = Branch::where('id', $branchId)->get();
+            $bookings = Booking::with('event')->where('unit_destination_id', $branchId)->get();
+            $rooms = Room::where('branch_id', $branchId)->get();
+        } else {
+            $branches = Branch::all();
+            $bookings = Booking::with('event')->get();
+            $rooms = Room::all();
+        }
         $data['guest'] = $guest;
-        $data['rooms'] = Room::all();
-        $data['branches'] = Branch::all();
-        $data['events'] = Event::all();
+        $data['rooms'] = $rooms;
+        $data['branches'] = $branches;
+        $data['bookings'] = $bookings;
         $data['selected_events'] = $guest->events()->pluck('events.id')->toArray();
         $data['page_title'] = 'Edit Tamu';
+
+        // dd($data);
         return view('pages.guest.edit', compact('data'));
     }
 
@@ -217,6 +224,8 @@ class GuestController extends Controller
      */
     public function update(Request $request, $id)
     {
+
+        $booking = Booking::findOrFail($request->event_id);
         $request->validate([
             'nama' => 'required|string|max:255',
             'jenis_kelamin' => 'required|string|max:1',
@@ -248,7 +257,9 @@ class GuestController extends Controller
             'tanggal_rencana_checkout' => $request->tanggal_rencana_checkout,
         ]);
 
-        $guest->events()->sync([$request->event_id]);
+        $guest->events()->attach($booking->event_id, ['booking_id' => $request->event_id]);
+
+        // $guest->events()->sync([$request->event_id]);
 
         return redirect()->route('guest.index')->with('success', 'Guest updated successfully');
     }
@@ -295,7 +306,7 @@ class GuestController extends Controller
             );
 
             Alert::success('Berhasil!', 'Kamar berhasil dipilih untuk tamu.');
-        return redirect()->back();
+            return redirect()->back();
         } catch (\Exception $e) {
             Alert::error('Error', 'Terjadi kesalahan: ' . $e->getMessage());
             return redirect()->back();
@@ -381,35 +392,39 @@ class GuestController extends Controller
         $validated = $request->validate([
             'room_id' => 'required|exists:rooms,id',
             'guests' => 'required|array',
-            'guests.*' => 'exists:guests,id', // Pastikan ID tamu valid
+            'guests.*' => 'exists:guests,id',
+            'booking_id' => 'required|exists:bookings,id',
         ]);
 
-        // Ambil data kamar
         $room = Room::find($validated['room_id']);
 
-        // Validasi kapasitas kamar
         if ($room->kapasitas < count($validated['guests'])) {
             return response()->json(['message' => 'Jumlah tamu melebihi kapasitas kamar.'], 400);
         }
 
-        // Ambil tamu berdasarkan ID yang dipilih
+        $existingCheckins = GuestCheckin::where('room_id', $validated['room_id'])
+            ->whereIn('guest_id', $validated['guests'])
+            ->where('booking_id', $validated['booking_id'])
+            ->exists();
+
+        if ($existingCheckins) {
+            return response()->json(['message' => 'Tamu sudah terdaftar di kamar ini dengan booking yang sama.'], 400);
+        }
+
         $guests = Guest::whereIn('id', $validated['guests'])->get();
 
-        // Proses penugasan tamu ke kamar
         foreach ($guests as $guest) {
-            // Cek apakah tamu sudah ada di guest_checkins dengan room_id yang sama
-            $existingCheckin = GuestCheckin::where('guest_id', $guest->id)->first();
+            $existingCheckin = GuestCheckin::where('guest_id', $guest->id)->where('booking_id', $validated['booking_id'])->first();
 
             if ($existingCheckin) {
-                // Jika tamu sudah ada, update room_id-nya
                 $existingCheckin->update([
                     'room_id' => $room->id,
                 ]);
             } else {
-                // Jika tamu belum ada, buat entri baru
                 GuestCheckin::create([
                     'guest_id' => $guest->id,
                     'room_id' => $room->id,
+                    'booking_id' => $validated['booking_id'],
                 ]);
             }
         }
@@ -460,5 +475,90 @@ class GuestController extends Controller
         }
 
         return response()->json(['message' => 'Checkout berhasil dilakukan.']);
+    }
+
+
+    public function get_rooms_by_booking_id(Request $request)
+    {
+        $booking_id = $request->input('booking_id');
+        $branchId = $request->input('branch_id');
+
+        $rooms_query = Room::with('branch')
+            ->select('rooms.*')
+            ->selectRaw('(rooms.kapasitas - COALESCE((SELECT COUNT(*) FROM guest_checkins WHERE guest_checkins.room_id = rooms.id AND guest_checkins.tanggal_checkout IS NULL), 0)) as bed_sisa')
+            ->selectRaw('(SELECT COUNT(*) FROM guest_checkins WHERE guest_checkins.room_id = rooms.id AND guest_checkins.tanggal_checkout IS NULL) as bed_terisi')
+            ->where('status', 'available');
+        // ->whereRaw('(rooms.kapasitas - (SELECT COUNT(*) FROM guest_checkins WHERE guest_checkins.room_id = rooms.id AND guest_checkins.tanggal_checkout IS NULL)) > 0');
+
+        if ($branchId) {
+            $rooms_query->where('branch_id', $branchId);
+        }
+
+        if ($booking_id) {
+            $rooms_query->join('event_ploting_rooms', 'rooms.id', '=', 'event_ploting_rooms.room_id')
+                ->where('event_ploting_rooms.booking_id', $booking_id);
+        }
+
+        $rooms = $rooms_query->distinct()->get();
+
+        return response()->json(['data' => $rooms]);
+    }
+
+    public function unCheckout(Request $request)
+    {
+        $guests = $request->guests; // Ambil array tamu dari request
+
+        // Pastikan data tidak kosong
+        if (!$guests || !is_array($guests)) {
+            return response()->json(['message' => 'Data tidak valid'], 400);
+        }
+
+        // Ambil guest_id dan booking_id dari array
+        $guestIds = collect($guests)->pluck('guest_id');
+        $bookingIds = collect($guests)->pluck('booking_id');
+
+        // Update data
+        GuestCheckin::whereIn('guest_id', $guestIds)
+            ->whereIn('booking_id', $bookingIds)
+            ->update(['tanggal_checkout' => null]);
+
+        return response()->json(['message' => 'Checkout berhasil dihapus']);
+    }
+
+    public function unCheckin(Request $request)
+    {
+        $guests = $request->guests;
+        if (!$guests || !is_array($guests)) {
+            return response()->json(['message' => 'Data tidak valid'], 400);
+        }
+
+        $guestIds = collect($guests)->pluck('guest_id');
+        $bookingIds = collect($guests)->pluck('booking_id');
+
+        GuestCheckin::whereIn('guest_id', $guestIds)
+            ->whereIn('booking_id', $bookingIds)
+            ->update([
+                'tanggal_checkin' => null,
+                'tanggal_checkout' => null
+            ]);
+
+        return response()->json(['message' => 'Check-in dan Checkout berhasil dihapus']);
+    }
+
+    public function unPloting(Request $request)
+    {
+        $guests = $request->guests;
+        if (!$guests || !is_array($guests)) {
+            return response()->json(['message' => 'Data tidak valid'], 400);
+        }
+
+        $guestIds = collect($guests)->pluck('guest_id');
+        $bookingIds = collect($guests)->pluck('booking_id');
+
+        GuestCheckin::whereIn('guest_id', $guestIds)
+            ->whereIn('booking_id', $bookingIds)
+            ->delete();
+
+        return response()->json(['message' => 'Data berhasil dihapus']);
     }
 }

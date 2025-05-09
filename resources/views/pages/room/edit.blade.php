@@ -85,7 +85,7 @@
                                             @endif
                                         </select>
                                     </div>
-                                    <div class="mb-3">
+                                    {{-- <div class="mb-3">
                                         <label for="event_id" class="form-label">Event</label>
                                         <select class="form-select" id="event_id" name="event_id">
                                             <!-- Tampilkan semua branch jika branch_id 0 -->
@@ -97,7 +97,7 @@
                                                 </option>
                                             @endforeach
                                         </select>
-                                    </div>
+                                    </div> --}}
 
                                     <div class="mb-3">
                                         <label for="room_status" class="form-label">Status Kamar *</label>

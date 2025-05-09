@@ -24,7 +24,8 @@ class Room extends Model
         return $this->belongsTo(Event::class);
     }
 
-    public function eventPlotingRooms() {
+    public function eventPlotingRooms()
+    {
         return $this->hasMany(EventPlotingRoom::class, 'room_id');
     }
 
@@ -66,10 +67,10 @@ class Room extends Model
     public static function getAvailable($branchId = null)
     {
         $query = self::with('branch')
-        ->select('rooms.*')
-        ->selectRaw('(rooms.kapasitas - (SELECT COUNT(*) FROM guest_checkins WHERE guest_checkins.room_id = rooms.id)) as sisa_bed')
-        ->where('status', 'available')
-        ->whereRaw('(rooms.kapasitas - (SELECT COUNT(*) FROM guest_checkins WHERE guest_checkins.room_id = rooms.id)) > 0');
+            ->select('rooms.*')
+            ->selectRaw('(rooms.kapasitas - (SELECT COUNT(*) FROM guest_checkins WHERE guest_checkins.room_id = rooms.id)) as sisa_bed')
+            ->where('status', 'available')
+            ->whereRaw('(rooms.kapasitas - (SELECT COUNT(*) FROM guest_checkins WHERE guest_checkins.room_id = rooms.id)) > 0');
 
         if ($branchId) {
             $query->where('branch_id', $branchId);
@@ -88,7 +89,7 @@ class Room extends Model
     public static function getAvailableRooms($branchId = null, $per_page = null)
     {
         $query = self::withCount('guestCheckins')
-        ->where('status', 'available');
+            ->where('status', 'available');
 
         if ($branchId) {
             $query->where('branch_id', $branchId);
@@ -104,9 +105,9 @@ class Room extends Model
             $room->sisa_kamar = $room->kapasitas - $room->guest_checkins_count;
             return $room;
         })
-        ->filter(function ($room) {
-            return $room->sisa_kamar > 0 && $room->status === 'available';
-        });
+            ->filter(function ($room) {
+                return $room->sisa_kamar > 0 && $room->status === 'available';
+            });
 
         return $rooms;
     }
@@ -142,7 +143,26 @@ class Room extends Model
     }
 
 
+    public static function getEventPlotingRooms($request)
+    {
+        $guestId = $request->guest_id;
+        $bookingId = $request->booking_id;
 
+        $rooms_query = Room::with('branch')
+            ->select('rooms.*')
+            ->selectRaw('(rooms.kapasitas - COALESCE((SELECT COUNT(*) FROM guest_checkins WHERE guest_checkins.room_id = rooms.id AND guest_checkins.tanggal_checkout IS NULL), 0)) as bed_sisa')
+            ->selectRaw('(SELECT COUNT(*) FROM guest_checkins WHERE guest_checkins.room_id = rooms.id AND guest_checkins.tanggal_checkout IS NULL) as bed_terisi')
+            ->where('status', 'available')
+            ->whereRaw('(rooms.kapasitas - (SELECT COUNT(*) FROM guest_checkins WHERE guest_checkins.room_id = rooms.id AND guest_checkins.tanggal_checkout IS NULL)) > 0');
 
+        if ($bookingId) {
+            $rooms_query->whereHas('eventPlotingRooms', function ($q) use ($bookingId) {
+                $q->where('booking_id', $bookingId);
+            });
+        }
 
+        $rooms = $rooms_query->get();
+
+        return view('partials.rooms-table', compact('rooms'));
+    }
 }

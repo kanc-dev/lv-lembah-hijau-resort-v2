@@ -82,10 +82,8 @@
                                                 class="text-danger">*</span></label>
                                         <select class="form-select @error('unit_origin_id') is-invalid @enderror"
                                             id="unit_origin_id" name="unit_origin_id" required>
-                                            @if (count($data['branches']) > 1)
-                                                <option value="">Pilih Unit Asal</option>
-                                            @endif
-                                            @foreach ($data['branches'] as $branch)
+                                            <option value="">Pilih Unit Asal</option>
+                                            @foreach ($data['branch_origin'] as $branch)
                                                 <option value="{{ $branch->id }}"
                                                     {{ old('unit_origin_id') == $branch->id ? 'selected' : '' }}>
                                                     {{ $branch->name }}
@@ -106,8 +104,10 @@
                                                 class="text-danger">*</span></label>
                                         <select class="form-select @error('unit_destination_id') is-invalid @enderror"
                                             id="unit_destination_id" name="unit_destination_id" required>
-                                            <option value="">Pilih Unit Tujuan</option>
-                                            @foreach ($data['branch_destination'] as $branch)
+                                            @if (count($data['branches']) > 1)
+                                                <option value="">Pilih Unit Tujuan</option>
+                                            @endif
+                                            @foreach ($data['branches'] as $branch)
                                                 <option value="{{ $branch->id }}"
                                                     {{ old('unit_destination_id') == $branch->id ? 'selected' : '' }}>
                                                     {{ $branch->name }}

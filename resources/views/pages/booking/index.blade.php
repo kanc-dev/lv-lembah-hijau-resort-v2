@@ -27,7 +27,7 @@
                 <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h5 class="mb-0 card-title">Data Reservasi</h5>
-                        <a href="{{ route('booking.create') }}" class="btn btn-primary">
+                        <a href="{{ route('booking.create') }}" class="btn btn-primary btn-sm">
                             <i class="ri-add-fill"></i> <span>Reservasi</span>
                         </a>
                     </div>
@@ -61,6 +61,7 @@
                                         <th>Unit Tujuan</th>
                                         <th>Rencana Check In/Out</th>
                                         <th>Total Kamar</th>
+                                        <th>Created At</th>
                                         <th>Aksi</th>
                                     </tr>
                                 </thead>
@@ -87,6 +88,7 @@
                                                     N/A
                                                 @endif
                                             </td>
+                                            <td>{{ $booking->created_at }}</td>
                                             {{-- <td>
                                                 @if (isset($booking->eventPlotingRooms) && count($booking->eventPlotingRooms) > 0)
                                                 <div class="flex-wrap gap-1 d-flex">

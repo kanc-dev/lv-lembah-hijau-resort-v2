@@ -28,6 +28,9 @@ Route::middleware('auth')->group(function () {
 
 
     Route::middleware('role.access:1,2,3')->group(function () { // Superadmin & PIC
+        Route::get('/home', function () {
+            return redirect()->route('dashboard.index');
+        });
         Route::get('/dashboard', [HomeController::class, 'index'])->name('dashboard.index');
         Route::get('/dashboard/{branchName}', [HomeController::class, 'branch'])
             ->where('branchName', 'bandung|yogyakarta|surabaya|padang|makassar')
@@ -64,14 +67,17 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/booking/{id}/plot-rooms', [BookingController::class, 'plotRooms'])->name('booking.plotRooms');
         Route::post('/booking/{id}/plot-rooms', [BookingController::class, 'storePlotRooms'])->name('booking.storePlotRooms');
-
     });
 
     Route::middleware('role.access:1,3')->group(function () {
 
-        Route::get('/guest', [GuestController::class, 'index'])->name('guest.index');
-        Route::resource('guest', GuestController::class);
+        // Route::get('/guest', [GuestController::class, 'index'])->name('guest.index');
+        Route::get('/guest/get-rooms-by-booking-id', [GuestController::class, 'get_rooms_by_booking_id'])->name('guest.get-rooms-by-booking-id');
         Route::post('/guest/{id}/plot-room', [GuestController::class, 'plotRoom'])->name('guest.plot-room.store');
+
+        Route::resource('guest', GuestController::class);
+
+
         Route::post('/guest/checkin/{guestId}', [GuestController::class, 'setCheckinDate'])->name('guest.checkin');
         Route::post('/guest/checkout/{guestId}', [GuestController::class, 'setCheckoutDate'])->name('guest.checkout');
 
@@ -80,6 +86,10 @@ Route::middleware('auth')->group(function () {
 
         Route::post('/guest/bulk-checkin', [GuestController::class, 'bulkCheckin'])->name('guest.bulkCheckin');
         Route::post('/guest/bulk-checkout', [GuestController::class, 'bulkCheckout'])->name('guest.bulkCheckout');
+
+        Route::post('/guest/uncheckout', [GuestController::class, 'unCheckout'])->name('guest.uncheckout');
+        Route::post('/guest/uncheckin', [GuestController::class, 'unCheckin'])->name('guest.uncheckin');
+        Route::post('/guest/unploting', [GuestController::class, 'unPloting'])->name('guest.unploting');
     });
 
     Route::middleware('role.access:1,3')->group(function () {

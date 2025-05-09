@@ -121,7 +121,7 @@
                                         </div>
                                     </div>
 
-                                    <div class="mb-3">
+                                    {{-- <div class="mb-3">
                                         <label for="event_id" class="form-label">Event<span
                                                 class="text-danger"></span></label>
                                         <select class="form-select @error('event_id') is-invalid @enderror" id="event_id"
@@ -141,7 +141,7 @@
                                                 Harap pilih unit atau branch.
                                             @enderror
                                         </div>
-                                    </div>
+                                    </div> --}}
 
                                     <div class="mb-3">
                                         <label for="room_status" class="form-label">Status Kamar <span

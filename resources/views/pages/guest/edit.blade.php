@@ -161,10 +161,10 @@
                                         <select class="form-select @error('event_id') is-invalid @enderror" id="event_id"
                                             name="event_id" required>
                                             <option value="">Pilih Event</option>
-                                            @foreach ($data['events'] as $event)
-                                                <option value="{{ $event->id }}"
-                                                    @if (in_array($event->id, old('event_id', $data['selected_events']))) selected @endif>
-                                                    {{ $event->nama_kelas }}
+                                            @foreach ($data['bookings'] as $booking)
+                                                <option value="{{ $booking->id }}"
+                                                    @if (in_array($booking->id, old('event_id', $data['selected_events']))) selected @endif>
+                                                    {{ $booking->event->nama_kelas }}
                                                 </option>
                                             @endforeach
                                         </select>
